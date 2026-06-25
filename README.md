@@ -1,13 +1,5 @@
 # Frostart
 
-> 做了个新标签页插件，主要是想自己用，顺便开源出来
-
-![license](https://img.shields.io/badge/license-GPL--3.0-blue)
-![manifest](https://img.shields.io/badge/manifest-v3-success)
-![version](https://img.shields.io/badge/version-1.0.0-informational)
-
----
-
 ## 这是什么
 
 **Frostart** 是鸢做的一款可高度自定义的本地毛玻璃浏览器首页插件~
