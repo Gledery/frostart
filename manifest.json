@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Frostart",
+  "version": "1.0.0",
+  "description": "一款基于毛玻璃设计美学的浏览器新标签页插件",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.bing.com/*"
+  ],
+  "icons": {
+    "16": "icons/Frostart2606-64px.png",
+    "48": "icons/Frostart2606-64px.png",
+    "128": "icons/Frostart2606-256px.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/Frostart2606-64px.png",
+      "48": "icons/Frostart2606-64px.png",
+      "128": "icons/Frostart2606-256px.png"
+    }
+  }
+}

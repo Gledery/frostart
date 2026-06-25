@@ -1,0 +1,155 @@
+/* =========================================
+   设计令牌
+   —— 仅放 :root / 主题变量，供所有页面共享
+   —— 自定义 accent-color 由 JS 运行时覆盖到 documentElement
+   ========================================= */
+
+/* 壁纸相关类型化自定义属性：注册为具体类型后，CSS 才能对其值
+   进行插值，从而让渐变颜色 / 角度 / 纯色 / 光斑色的变化产生平滑过渡。 */
+@property --wp-c1 {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #e8eef7;
+}
+@property --wp-c2 {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #dde6f5;
+}
+@property --wp-angle {
+    syntax: '<angle>';
+    inherits: true;
+    initial-value: 135deg;
+}
+@property --wp-solid {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #e6eef7;
+}
+@property --blob-c1-strong {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: rgba(45, 136, 240, 0.5);
+}
+@property --blob-c1-soft {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: rgba(100, 194, 220, 0.38);
+}
+@property --blob-c2-strong {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: rgba(171, 138, 255, 0.5);
+}
+@property --blob-c2-soft {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: rgba(140, 200, 255, 0.38);
+}
+
+:root {
+    /* 毛玻璃可调参数 */
+    --blur-amount: 8px;
+    --glass-opacity: 1;
+    /* 玻璃底色基础 alpha（模糊度只作用于背景） */
+    --bg-base-alpha: 0.7;
+    --saturation-amount: 150%;
+    --icon-size: 72px;
+    --icon-max-width: 960px;
+    --border-radius: 24px;
+    --shortcut-gap: 24px;
+    --shortcut-name-size: 13px;
+    --clock-size: 88px;
+    --search-width: 580px;
+    --search-height: 58px;
+    --search-radius: 9999px;
+    --content-position: 18;
+
+    /* 细化文本颜色（每种文本可独立覆盖） */
+    --clock-color: var(--global-text-color, var(--text-primary));
+    --date-color: var(--global-text-color, var(--text-secondary));
+    --shortcut-name-color: var(--global-text-color, var(--text-secondary));
+    --search-text-color: var(--global-text-color, var(--text-primary));
+    --search-placeholder-color: var(--global-text-color, var(--text-muted));
+    --settings-icon-color: var(--text-primary);
+
+    /* 圆角系统（对齐 PhasWer 的大圆角语言） */
+    --radius-sm: 16px;
+    --radius-md: 24px;
+    --radius-lg: 32px;
+    --radius-xl: 40px;
+    --radius-pill: 9999px;
+
+    /* 间距系统（8px 基准） */
+    --space-xs: 8px;
+    --space-sm: 12px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+
+    /* 动效时长（对齐 PhasWer） */
+    --time-fast: 0.15s;
+    --time-normal: 0.3s;
+    --time-slow: 0.8s;
+    --time-page: 0.6s;
+
+    /* 缓动曲线 */
+    --easing-enter: cubic-bezier(0.2, 0.8, 0.4, 1);
+    --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --easing-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* 阴影层次 */
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.15);
+    --shadow-inset: inset 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+    --bg-primary: rgba(255, 255, 255, var(--bg-base-alpha));
+    --bg-secondary: rgba(255, 255, 255, calc(var(--bg-base-alpha) * 0.7));
+    --bg-hover: rgba(0, 0, 0, 0.05);
+    --bg-active: rgba(0, 0, 0, 0.1);
+    --border-glass: 2px solid rgba(255, 255, 255, 0.3);
+    --text-primary: #1a1a2a;
+    --text-secondary: #4a4a5a;
+    --text-muted: #6a6a7a;
+    --text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+    --text-shadow-strong: 0 2px 10px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
+    --gradient-page: linear-gradient(135deg, #D3E7FF 0%, #EAE2FF 100%);
+    /* 光斑透明度：浅色下稍强，但仍保持柔和 */
+    --blob-alpha-strong: 0.5;
+    --blob-alpha-soft: 0.38;
+    --wallpaper-mask-color: rgba(255, 255, 255, 0.45);
+    --divider-color: rgba(0, 0, 0, 0.1);
+    --accent-color: #5b6ee1;
+    /* 图标背景：高于全局玻璃底色，确保在浅色壁纸上可见 */
+    --icon-bg: rgba(255, 255, 255, 0.85);
+}
+
+/* 深色主题 */
+[data-theme="dark"] {
+    --bg-primary: rgba(28, 28, 40, var(--bg-base-alpha));
+    --bg-secondary: rgba(28, 28, 40, calc(var(--bg-base-alpha) * 0.85));
+    --bg-hover: rgba(255, 255, 255, 0.08);
+    --bg-active: rgba(255, 255, 255, 0.15);
+    --border-glass: 2px solid rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #b8b8c8;
+    --text-muted: #888898;
+    --text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    --text-shadow-strong: 0 2px 12px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.3);
+    --gradient-page: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    /* 光斑透明度：深色下更淡，避免刺眼 */
+    --blob-alpha-strong: 0.32;
+    --blob-alpha-soft: 0.22;
+    --wallpaper-mask-color: rgba(20, 20, 35, 0.55);
+    --divider-color: rgba(255, 255, 255, 0.1);
+    --accent-color: #7c8aef;
+    --icon-bg: rgba(28, 28, 40, 0.85);
+}
+

@@ -1,0 +1,47 @@
+# Frostart 发版检查清单
+
+鸢很傻，鸢需要一个每次发布新版本前逐项检查的清单OwO
+
+## 版本号同步
+
+- [ ] `manifest.json` → `"version"`
+- [ ] `js/settings.js` → `VERSION: 'x.x.x'`
+- [ ] `README.md` → 徽章 `version-x.x.x`
+
+## 配置默认值同步
+
+- [ ] `js/settings.js` 的 `defaultSettings` 有新增 / 改动时，同步更新 `converter.html` 内联脚本中的 `FROSTART_DEFAULTS`
+- [ ] 检查 converter.html 内联脚本的 FROSTART_DEFAULTS 注释是否需要更新
+
+## 功能验证
+
+- [ ] 新标签页正常加载，时钟 / 农历 / 天气正常
+- [ ] 搜索栏：所有引擎可切换，自定义引擎能添加 / 删除
+- [ ] 快捷方式：增删改、拖拽排序、右键菜单、图标上传 + 编辑器
+- [ ] 设置面板：所有滑块 / 开关 / 拾色器生效且实时保存
+- [ ] 壁纸：渐变 / 纯色 / 图片三种模式切换，预设可用
+- [ ] 数据：导出 / 导入 / 重置功能正常
+- [ ] 开发者安装包下载：「数据与关于」→ 点击「下载安装包」，能生成 ZIP；解压后可正常加载（注：该功能需在扩展已加载到浏览器后使用，本地 file:// 打开无效）
+- [ ] 安装包卡片：已安装为扩展时自动隐藏；在线预览（网页版）时显示
+- [ ] 更新检查：打开新标签页 → 自动请求 GitHub API；版本号旁出现徽章（若有新版）；点「检查更新」按钮给出 toast 反馈
+- [ ] 转换工具（converter.html）：iTab 导入 + Frostart 导出双向可用
+
+## MV3 合规
+
+- [ ] 所有 HTML 页面的 `<script>` 均为外部引用（`src="..."`），无内联脚本
+- [ ] 无 `eval()`、`new Function()`、内联事件处理器（`onclick=` 等）
+- [ ] CSP 未报错（打开扩展页后 DevTools Console 无 CSP 违规警告）
+
+## 视觉与性能
+
+- [ ] 亮色 / 暗色 / 跟随系统三种主题切换正常
+- [ ] Kaomoji 角落组件正常显示和交互
+- [ ] 图标编辑器裁切 / 缩放 / 背景色正常
+- [ ] 无残留的 `will-change` 常驻在非动画元素上
+
+## 提交与打包
+
+- [ ] 更新 `changelog.html` / `js/changelog.js` 的版本记录
+- [ ] `git commit` 信息格式：`vX.X.X: 简述`
+- [ ] 打包时排除 `.git/`、`PhaswerWebSource-*/`、`*.zip`
+- [ ] 在 Chrome 和 Edge 中分别加载测试
