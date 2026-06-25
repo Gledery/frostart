@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新标签页</title>
+    <link rel="icon" href="icons/Frostart2606-64px.png" type="image/png">
+    <link rel="apple-touch-icon" href="icons/Frostart2606-256px.png">
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- 壁纸系统：渐变光斑层 -->
+    <div class="wallpaper-layer" id="wallpaper-layer" aria-hidden="true">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    <!-- 壁纸系统：图片层 -->
+    <div class="wallpaper-image" aria-hidden="true"></div>
+    <!-- 壁纸系统：遮罩层 -->
+    <div class="wallpaper-mask" aria-hidden="true"></div>
+
+    <!-- 首屏壁纸缓存：在主 JS 加载前同步应用 localStorage 中的壁纸变量，
+         避免首屏从默认壁纸闪烁到用户自定义壁纸。三层防线第 1 层。
+         置于壁纸三层 DOM 之后，确保 .wallpaper-image 已可查询。
+         注意：MV3 默认 CSP 禁止内联 <script>，必须用外部文件同步加载。 -->
+    <script src="js/wp-cache.js"></script>
+
+    <main class="main-container">
+        <section class="center-content">
+            <div class="time-display">
+                <span id="time" class="time"></span>
+                <span id="date" class="date"></span>
+            </div>
+
+            <div class="search-box glass-effect">
+                <div class="search-engine-indicator" id="search-engine-indicator" aria-label="搜索引擎" role="button" tabindex="0"></div>
+                <div class="engine-popup glass-effect" id="engine-popup"></div>
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="search-input" placeholder="搜索..." autocomplete="off" aria-label="搜索">
+                <kbd class="search-kbd" title="按 / 键快速聚焦搜索框">/</kbd>
+            </div>
+
+            <div class="shortcuts-container" id="shortcuts-container" role="navigation" aria-label="快捷方式"></div>
+        </section>
+    </main>
+
+    <button class="settings-btn glass-effect" id="settings-btn" title="设置" aria-label="打开设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+    </button>
+
+    <!-- 抽屉遮罩层 -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <!-- 悬浮抽屉（设置面板） -->
+    <aside class="settings-drawer" id="settings-drawer" role="dialog" aria-label="设置" aria-modal="true">
+        <div class="drawer-header">
+            <h2>设置</h2>
+            <button class="close-btn" id="close-settings" aria-label="关闭设置">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 设置搜索框 -->
+        <div class="settings-search" id="settings-search-wrap">
+            <svg class="settings-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+            <input type="text" id="settings-search-input" class="settings-search-input" placeholder="搜索设置…" autocomplete="off">
+            <kbd class="settings-search-kbd" id="settings-search-kbd" title="按 / 键搜索设置">/</kbd>
+        </div>
+
+        <!-- 标签页导航 -->
+        <nav class="tab-nav" role="tablist">
+            <button class="tab-btn active" data-tab="appearance" role="tab">外观</button>
+            <button class="tab-btn" data-tab="clock" role="tab">时钟</button>
+            <button class="tab-btn" data-tab="text" role="tab">文本</button>
+            <button class="tab-btn" data-tab="wallpaper" role="tab">壁纸</button>
+            <button class="tab-btn" data-tab="search" role="tab">搜索</button>
+            <button class="tab-btn" data-tab="shortcuts" role="tab">图标</button>
+            <button class="tab-btn" data-tab="data" role="tab">数据与关于</button>
+        </nav>
+
+        <div class="drawer-content">
+            <!-- 外观标签页 -->
+            <div class="tab-panel active" data-panel="appearance">
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <label class="setting-label">主题模式</label>
+                        <div class="theme-toggle">
+                            <button class="option-btn" data-theme-option="light" aria-label="浅色主题">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                                <span>浅色</span>
+                            </button>
+                            <button class="option-btn active" data-theme-option="auto" aria-label="跟随系统">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                                </svg>
+                                <span>自动</span>
+                            </button>
+                            <button class="option-btn" data-theme-option="dark" aria-label="深色主题">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                                <span>深色</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">主题色</label>
+                        <div class="accent-picker" id="accent-picker">
+                            <button type="button" class="accent-swatch" data-color="#5b6ee1" style="background:#5b6ee1" title="蓝紫（默认）" aria-label="蓝紫"></button>
+                            <button type="button" class="accent-swatch" data-color="#3b82f6" style="background:#3b82f6" title="靛蓝" aria-label="靛蓝"></button>
+                            <button type="button" class="accent-swatch" data-color="#06b6d4" style="background:#06b6d4" title="青" aria-label="青"></button>
+                            <button type="button" class="accent-swatch" data-color="#10b981" style="background:#10b981" title="翠绿" aria-label="翠绿"></button>
+                            <button type="button" class="accent-swatch" data-color="#f59e0b" style="background:#f59e0b" title="琥珀" aria-label="琥珀"></button>
+                            <button type="button" class="accent-swatch" data-color="#ec4899" style="background:#ec4899" title="玫红" aria-label="玫红"></button>
+                            <button type="button" class="accent-swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="紫" aria-label="紫"></button>
+                            <button type="button" class="accent-swatch" data-color="#64748b" style="background:#64748b" title="石板灰" aria-label="石板灰"></button>
+                            <label class="accent-custom" title="自定义颜色">
+                                <input type="color" id="accent-color-input" value="#5b6ee1" aria-label="自定义主题色">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.5 2 12 2z"/></svg>
+                            </label>
+                            <button type="button" class="accent-reset" id="accent-reset-btn" title="恢复默认主题色" aria-label="恢复默认主题色">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            </button>
+                        </div>
+                        <div class="setting-hint">点击预设或自定义颜色；恢复默认则跟随浅/深主题</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">Kaomoji</span>
+                            <label class="switch">
+                                <input type="checkbox" id="kaomoji-toggle" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title">布局</h3>
+                    <div class="setting-item">
+                        <label class="setting-label">内容垂直位置</label>
+                        <div class="slider-container">
+                            <input type="range" id="content-position-slider" class="slider" min="5" max="50" value="18">
+                            <span class="slider-value" id="content-position-value">18%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title">毛玻璃效果</h3>
+                    <div class="setting-item">
+                        <label class="setting-label">模糊度</label>
+                        <div class="slider-container">
+                            <input type="range" id="blur-slider" class="slider" min="0" max="30" value="8">
+                            <span class="slider-value" id="blur-value">8px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">饱和度</label>
+                        <div class="slider-container">
+                            <input type="range" id="saturation-slider" class="slider" min="100" max="200" value="150">
+                            <span class="slider-value" id="saturation-value">150%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时钟标签页 -->
+            <div class="tab-panel" data-panel="clock">
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <label class="setting-label">时间格式</label>
+                        <div class="simple-toggle">
+                            <button class="option-btn active" data-time-format="24">24 小时</button>
+                            <button class="option-btn" data-time-format="12">12 小时</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">时钟数字字体</label>
+                        <div class="font-presets">
+                            <button class="clock-font-preset-btn font-preset-btn active" data-clock-font="">默认</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Outfit" style="font-family:Outfit,sans-serif;font-variant-numeric:tabular-nums;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Space Grotesk" style="font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Unbounded" style="font-family:Unbounded,sans-serif;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Orbitron" style="font-family:Orbitron,sans-serif;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Major Mono Display" style="font-family:'Major Mono Display',monospace;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="JetBrains Mono" style="font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Playfair Display" style="font-family:'Playfair Display',serif;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="DM Serif Display" style="font-family:'DM Serif Display',serif;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="DM Mono" style="font-family:'DM Mono',monospace;">08:24</button>
+                            <button class="clock-font-preset-btn font-preset-btn" data-clock-font="Audiowide" style="font-family:Audiowide,cursive;">08:24</button>
+                        </div>
+                        <div class="setting-hint">完全独立于全局字体，只作用于时钟数字awa 演示文字就是预览</div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">时钟大小</label>
+                        <div class="slider-container">
+                            <input type="range" id="clock-size-slider" class="slider" min="48" max="160" value="88">
+                            <span class="slider-value" id="clock-size-value">88px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">显示秒</span>
+                            <label class="switch">
+                                <input type="checkbox" id="show-seconds">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">显示星期</span>
+                            <label class="switch">
+                                <input type="checkbox" id="show-week" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">显示农历</span>
+                            <label class="switch">
+                                <input type="checkbox" id="show-lunar">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文本标签页 -->
+            <div class="tab-panel" data-panel="text">
+                <div class="settings-section">
+                    <h3 class="section-title">字体</h3>
+                    <div class="setting-item">
+                        <label class="setting-label">字体预设</label>
+                        <div class="font-presets">
+                            <button class="font-preset-btn" data-font-preset="">默认</button>
+                            <button class="font-preset-btn" data-font-preset="Inter" style="font-family:Inter,sans-serif;">Inter</button>
+                            <button class="font-preset-btn" data-font-preset="Roboto" style="font-family:Roboto,sans-serif;">Roboto</button>
+                            <button class="font-preset-btn" data-font-preset="Poppins" style="font-family:Poppins,sans-serif;">Poppins</button>
+                            <button class="font-preset-btn" data-font-preset="Montserrat" style="font-family:Montserrat,sans-serif;">Montserrat</button>
+                            <button class="font-preset-btn" data-font-preset="Nunito" style="font-family:Nunito,sans-serif;">Nunito</button>
+                            <button class="font-preset-btn" data-font-preset="Outfit" style="font-family:Outfit,sans-serif;">Outfit</button>
+                            <button class="font-preset-btn" data-font-preset="Space Grotesk" style="font-family:'Space Grotesk',sans-serif;">Space Grotesk</button>
+                            <button class="font-preset-btn" data-font-preset="Noto Sans SC" style="font-family:'Noto Sans SC',sans-serif;">思源黑体</button>
+                            <button class="font-preset-btn" data-font-preset="Noto Serif SC" style="font-family:'Noto Serif SC',serif;">思源宋体</button>
+                            <button class="font-preset-btn" data-font-preset="LXGW WenKai" style="font-family:'LXGW WenKai',serif;">霞鹜文楷</button>
+                            <button class="font-preset-btn" data-font-preset="ZCOOL XiaoWei" style="font-family:'ZCOOL XiaoWei',serif;">站酷小薇</button>
+                            <button class="font-preset-btn" data-font-preset="Long Cang" style="font-family:'Long Cang',cursive;">龙藏体</button>
+                            <button class="font-preset-btn" data-font-preset="Playfair Display" style="font-family:'Playfair Display',serif;">Playfair</button>
+                            <button class="font-preset-btn" data-font-preset="Lora" style="font-family:Lora,serif;">Lora</button>
+                            <button class="font-preset-btn" data-font-preset="JetBrains Mono" style="font-family:'JetBrains Mono',monospace;">JetBrains Mono</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">自定义字体名称</label>
+                        <input type="text" id="custom-font" class="text-input" placeholder="Inter, Noto Sans SC...">
+                        <div class="setting-hint">选择预设或输入 Google 字体名。</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title">全局文本颜色</h3>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="global-text-color-picker" class="color-picker" value="#1a1a2a" aria-label="全局文本颜色">
+                            <span class="setting-label">应用到所有文本</span>
+                            <button class="color-reset-btn" id="global-text-color-reset" type="button">清除</button>
+                        </div>
+                        <div class="setting-hint" style="margin-top:4px;">设置后所有文本统一使用此颜色，下方可单独覆盖</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="section-header-row">
+                        <h3 class="section-title">单独覆盖</h3>
+                        <button class="text-btn" id="reset-color-all" type="button">全部重置</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="clock-color-picker" class="color-picker" value="#ffffff" aria-label="时钟颜色">
+                            <span class="setting-label">时钟</span>
+                            <button class="color-reset-btn" id="clock-color-reset" type="button">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="date-color-picker" class="color-picker" value="#ffffff" aria-label="日期颜色">
+                            <span class="setting-label">日期</span>
+                            <button class="color-reset-btn" id="date-color-reset" type="button">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="shortcut-name-color-picker" class="color-picker" value="#ffffff" aria-label="快捷方式名称颜色">
+                            <span class="setting-label">快捷方式名称</span>
+                            <button class="color-reset-btn" id="shortcut-name-color-reset" type="button">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="search-text-color-picker" class="color-picker" value="#1a1a2a" aria-label="搜索文字颜色">
+                            <span class="setting-label">搜索文字</span>
+                            <button class="color-reset-btn" id="search-text-color-reset" type="button">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="search-placeholder-color-picker" class="color-picker" value="#6a6a7a" aria-label="搜索占位符颜色">
+                            <span class="setting-label">搜索占位符</span>
+                            <button class="color-reset-btn" id="search-placeholder-color-reset" type="button">重置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 壁纸标签页 -->
+            <div class="tab-panel" data-panel="wallpaper">
+                <div class="settings-section">
+                    <!-- 渐变壁纸 -->
+                    <div class="wallpaper-type-block" data-type="gradient">
+                        <div class="wallpaper-type-header">
+                            <span class="setting-label">🎨 渐变壁纸</span>
+                            <label class="switch">
+                                <input type="checkbox" id="wp-gradient-toggle">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="wallpaper-type-content" id="wp-gradient-content">
+                            <div class="setting-item">
+                                <label class="setting-label">渐变颜色 1</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="gradient-color-1" class="color-picker" value="#e8eef7" aria-label="渐变颜色1">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">渐变颜色 2</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="gradient-color-2" class="color-picker" value="#dde6f5" aria-label="渐变颜色2">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">渐变角度</label>
+                                <div class="slider-container">
+                                    <input type="range" id="gradient-angle-slider" class="slider" min="0" max="360" value="135">
+                                    <span class="slider-value" id="gradient-angle-value">135°</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">渐变预设</label>
+                                <div class="gradient-presets">
+                                    <button class="gradient-preset" data-c1="#e8eef7" data-c2="#dde6f5" data-angle="135" style="background:linear-gradient(135deg,#e8eef7,#dde6f5);" title="晨雾蓝"></button>
+                                    <button class="gradient-preset" data-c1="#e7efe9" data-c2="#d6e6dc" data-angle="135" style="background:linear-gradient(135deg,#e7efe9,#d6e6dc);" title="青瓷绿"></button>
+                                    <button class="gradient-preset" data-c1="#f3ece6" data-c2="#e8dcd2" data-angle="135" style="background:linear-gradient(135deg,#f3ece6,#e8dcd2);" title="暖砂"></button>
+                                    <button class="gradient-preset" data-c1="#f1e8ee" data-c2="#e4d4df" data-angle="135" style="background:linear-gradient(135deg,#f1e8ee,#e4d4df);" title="藕粉"></button>
+                                    <button class="gradient-preset" data-c1="#efece6" data-c2="#e0d8c8" data-angle="135" style="background:linear-gradient(135deg,#efece6,#e0d8c8);" title="米杏"></button>
+                                    <button class="gradient-preset" data-c1="#edeaf2" data-c2="#d8d2e6" data-angle="135" style="background:linear-gradient(135deg,#edeaf2,#d8d2e6);" title="薰衣"></button>
+                                    <button class="gradient-preset" data-c1="#283044" data-c2="#1a2034" data-angle="135" style="background:linear-gradient(135deg,#283044,#1a2034);" title="夜蓝"></button>
+                                    <button class="gradient-preset" data-c1="#2a2530" data-c2="#1c1820" data-angle="135" style="background:linear-gradient(135deg,#2a2530,#1c1820);" title="深墨"></button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="switch-row">
+                                    <label class="setting-label">光斑颜色</label>
+                                    <div class="switch-with-text">
+                                        <span class="switch-text">跟随渐变</span>
+                                        <label class="switch" title="开启后光斑颜色自动跟随渐变背景派生">
+                                            <input type="checkbox" id="blob-follow-gradient">
+                                            <span class="switch-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="color-input-wrapper" id="blob-colors-wrapper" style="gap:12px;align-items:center;margin-top:10px;">
+                                    <input type="color" id="blob-color-1" class="color-picker" value="#2d88f0" aria-label="光斑颜色1">
+                                    <input type="color" id="blob-color-2" class="color-picker" value="#ab8aff" aria-label="光斑颜色2">
+                                </div>
+                                <div class="setting-hint">开启后光斑颜色自动跟随渐变背景；关闭后可自定义</div>
+                            </div>
+                            <div class="setting-item">
+                                <button class="data-btn" id="gradient-reset-btn" type="button" style="width:100%;">
+                                    恢复默认渐变
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 必应每日壁纸 -->
+                    <div class="wallpaper-type-block" data-type="bing">
+                        <div class="wallpaper-type-header">
+                            <span class="setting-label">🌐 必应每日壁纸</span>
+                            <label class="switch">
+                                <input type="checkbox" id="wp-bing-toggle">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="wallpaper-type-content" id="wp-bing-content">
+                            <div class="setting-item">
+                                <div class="setting-hint">每天自动通过官方接口获取 Bing 首页美图</div>
+                            </div>
+                            <div class="setting-item">
+                                <button class="data-btn" id="bing-refresh-btn" type="button" style="width:100%;">
+                                    立即刷新
+                                </button>
+                            </div>
+                            <div class="setting-item" id="bing-info-wrap" style="display:none;">
+                                <div class="setting-hint" id="bing-info-text"></div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">遮罩不透明度</label>
+                                <div class="slider-container">
+                                    <input type="range" id="bing-mask-slider" class="slider" min="0" max="80" value="20">
+                                    <span class="slider-value" id="bing-mask-value">20%</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">模糊度</label>
+                                <div class="slider-container">
+                                    <input type="range" id="bing-blur-slider" class="slider" min="0" max="30" value="0">
+                                    <span class="slider-value" id="bing-blur-value">0px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 图片壁纸 -->
+                    <div class="wallpaper-type-block" data-type="image">
+                        <div class="wallpaper-type-header">
+                            <span class="setting-label">🖼️ 图片壁纸</span>
+                            <label class="switch">
+                                <input type="checkbox" id="wp-image-toggle">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="wallpaper-type-content" id="wp-image-content">
+                            <div class="setting-item">
+                                <div class="wallpaper-upload-area">
+                                    <button class="upload-btn" id="wallpaper-upload-btn" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        上传
+                                    </button>
+                                    <input type="file" id="wallpaper-upload" accept="image/*" style="display:none;">
+                                    <button class="upload-btn" id="wallpaper-clear-btn" type="button">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                        </svg>
+                                        清除
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <input type="url" id="wallpaper-url" class="text-input" placeholder="图片网址...">
+                            </div>
+                            <div class="wallpaper-preview empty" id="wallpaper-preview">暂无图片</div>
+                            <div class="setting-item">
+                                <label class="setting-label">遮罩不透明度</label>
+                                <div class="slider-container">
+                                    <input type="range" id="wallpaper-mask-slider" class="slider" min="0" max="80" value="20">
+                                    <span class="slider-value" id="wallpaper-mask-value">20%</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label">模糊度</label>
+                                <div class="slider-container">
+                                    <input type="range" id="wallpaper-blur-slider" class="slider" min="0" max="30" value="0">
+                                    <span class="slider-value" id="wallpaper-blur-value">0px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 纯色壁纸 -->
+                    <div class="wallpaper-type-block" data-type="solid">
+                        <div class="wallpaper-type-header">
+                            <span class="setting-label">⬜ 纯色壁纸</span>
+                            <label class="switch">
+                                <input type="checkbox" id="wp-solid-toggle">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="wallpaper-type-content" id="wp-solid-content">
+                            <div class="setting-item">
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="wallpaper-color" class="color-picker" value="#e6eef7" aria-label="壁纸颜色">
+                                    <span class="setting-label">背景颜色</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 搜索标签页 -->
+            <div class="tab-panel" data-panel="search">
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <label class="setting-label">快捷切换引擎</label>
+                        <div class="search-engine-grid" id="search-engine-grid"></div>
+                        <div class="setting-hint" style="margin-top:8px;">可以勾选要出现在搜索框抽屉里的引擎~当前使用的引擎右侧会显示对勾</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">搜索框引擎快捷切换</span>
+                            <label class="switch">
+                                <input type="checkbox" id="engine-quick-switch" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-hint">开启后，点击搜索框左侧引擎图标可快速在已加入的引擎间切换</div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">在新标签页打开搜索结果</span>
+                            <label class="switch">
+                                <input type="checkbox" id="search-new-tab">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">搜索框宽度</label>
+                        <div class="slider-container">
+                            <input type="range" id="search-width-slider" class="slider" min="320" max="900" value="650">
+                            <span class="slider-value" id="search-width-value">650px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">搜索框高度</label>
+                        <div class="slider-container">
+                            <input type="range" id="search-height-slider" class="slider" min="44" max="88" value="58">
+                            <span class="slider-value" id="search-height-value">58px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">搜索框圆角</label>
+                        <div class="slider-container">
+                            <input type="range" id="search-radius-slider" class="slider" min="0" max="60" value="60">
+                            <span class="slider-value" id="search-radius-value">胶囊</span>
+                        </div>
+                        <div class="setting-hint">拖到最右为完全胶囊形</div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">自定义引擎</label>
+                        <div class="custom-engines-list" id="custom-engines-list"></div>
+                        <button class="add-shortcut-btn" id="add-engine-btn" type="button" style="margin-top:8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            添加引擎
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷方式标签页 -->
+            <div class="tab-panel" data-panel="shortcuts">
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <label class="setting-label">图标大小</label>
+                        <div class="slider-container">
+                            <input type="range" id="icon-size-slider" class="slider" min="32" max="120" value="72">
+                            <span class="slider-value" id="icon-size-value">72px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">圆角</label>
+                        <div class="slider-container">
+                            <input type="range" id="radius-slider" class="slider" min="0" max="40" value="24">
+                            <span class="slider-value" id="radius-value">24px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">图标文字大小</label>
+                        <div class="slider-container">
+                            <input type="range" id="shortcut-name-size-slider" class="slider" min="0" max="24" value="13">
+                            <span class="slider-value" id="shortcut-name-size-value">13px</span>
+                        </div>
+                        <div class="setting-hint">设为 0 则隐藏图标下方的名称</div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">图标背景透明度</label>
+                        <div class="slider-container">
+                            <input type="range" id="icon-bg-slider" class="slider" min="-1" max="100" value="-1">
+                            <span class="slider-value" id="icon-bg-value">默认</span>
+                        </div>
+                        <div class="setting-hint">设为"默认"则使用高不透明度，保证图标可见</div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">图标模糊</label>
+                        <div class="slider-container">
+                            <input type="range" id="icon-blur-slider" class="slider" min="-1" max="30" value="-1">
+                            <span class="slider-value" id="icon-blur-value">跟随</span>
+                        </div>
+                        <div class="setting-hint">设为"跟随"则使用全局模糊度</div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">图标间距</label>
+                        <div class="slider-container">
+                            <input type="range" id="shortcut-gap-slider" class="slider" min="0" max="64" value="24">
+                            <span class="slider-value" id="shortcut-gap-value">24px</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">图标区域宽度</label>
+                        <div class="slider-container">
+                            <input type="range" id="icon-max-width-slider" class="slider" min="200" max="1920" value="960">
+                            <span class="slider-value" id="icon-max-width-value">960</span>
+                            <div class="simple-toggle" style="margin-left:8px;">
+                                <button class="option-btn active" data-width-unit="px" style="flex-direction:row;padding:6px 12px;font-size:12px;">px</button>
+                                <button class="option-btn" data-width-unit="%" style="flex-direction:row;padding:6px 12px;font-size:12px;">%</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <span class="setting-label">在新标签页打开</span>
+                            <label class="switch">
+                                <input type="checkbox" id="open-new-tab" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="shortcuts-list" id="shortcuts-list"></div>
+                    <button class="add-shortcut-btn" id="add-shortcut-btn" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        添加快捷方式
+                    </button>
+                </div>
+            </div>
+
+            <!-- 数据标签页 -->
+            <div class="tab-panel" data-panel="data">
+                <!-- 下载开发者安装包（醒目置顶） -->
+                <div class="settings-section pack-section">
+                    <div class="pack-download-card">
+                        <div class="pack-icon-badge" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <div class="pack-download-info">
+                            <div class="pack-download-title">获取项目文件以安装</div>
+                            <div class="update-guide" style="margin-top:8px;">
+                                <ol class="update-guide-steps">
+                                    <li>点击右侧「下载安装包」，获取 ZIP 文件</li>
+                                    <li>解压下载的文件</li>
+                                    <li>在开启开发者模式的浏览器扩展管理中点击加载解压缩的扩展，选择这个文件夹即可</li>
+                                </ol>
+                                <div class="update-guide-note">需在本插件已加载的新标签页里使用</div>
+                            </div>
+                        </div>
+                        <button class="pack-download-btn" id="pack-download-btn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span class="pack-btn-label">下载安装包</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title">备份与恢复</h3>
+                    <div class="data-actions">
+                        <button class="data-btn" id="export-btn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            导出配置
+                        </button>
+                        <button class="data-btn" id="import-btn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            导入配置
+                        </button>
+                        <button class="data-btn danger-btn" id="reset-btn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            恢复默认
+                        </button>
+                        <input type="file" id="import-file" accept=".json" style="display:none;">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title">更新日志</h3>
+                    <div class="data-actions">
+                        <a href="changelog.html" class="data-btn" style="text-decoration:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
+                            查看更新日志
+                        </a>
+                        <button class="data-btn" id="check-update-btn" type="button">
+                            <svg class="check-update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            <span id="check-update-label">检查更新</span>
+                        </button>
+                    </div>
+                    <div class="update-guide">
+                        <div class="update-guide-title">更新方法（没办法鸢没钱买服务器QAQ</div>
+                        <ol class="update-guide-steps">
+                            <li>发现新版本后，点击按钮跳转 GitHub</li>
+                            <li>下载最新版项目文件并解压</li>
+                            <li>在开启开发者模式的浏览器扩展管理中点击加载解压缩的扩展， 选择这个文件夹即可</li>
+                        </ol>
+                        <div class="update-guide-note">所有的配置都是保存在浏览器里的，更新不会丢失w</div>
+                    </div>
+                </div>
+
+                <!-- 存储空间用量 -->
+                <div class="settings-section">
+                    <div class="section-header-row">
+                        <h3 class="section-title">存储空间</h3>
+                        <button class="storage-refresh-btn" id="storage-refresh-btn" type="button" title="刷新用量" aria-label="刷新存储用量">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="storage-usage">
+                        <div class="storage-row">
+                            <div class="storage-row-head">
+                                <span class="storage-label">插件存储<span class="storage-quota-name">chrome.storage.local</span></span>
+                                <span class="storage-value" id="storage-cs-value">— / 10 MB</span>
+                            </div>
+                            <div class="storage-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="插件存储用量">
+                                <div class="storage-bar-fill" id="storage-cs-fill"></div>
+                            </div>
+                        </div>
+                        <div class="storage-row">
+                            <div class="storage-row-head">
+                                <span class="storage-label">首屏缓存<span class="storage-quota-name">localStorage</span></span>
+                                <span class="storage-value" id="storage-ls-value">— / 10 MB</span>
+                            </div>
+                            <div class="storage-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="首屏缓存用量">
+                                <div class="storage-bar-fill" id="storage-ls-fill"></div>
+                            </div>
+                        </div>
+                        <div class="setting-hint">一般来说插件配置本身是只会占几 K的；如果用的太多可能还上传了太多自定义图标或者太大的壁纸<br>（这个限制真的不是我规定的，是万恶的谷歌！！！（超大声 <br> setting.js里已经有了超限兜底，所以你一般不用担心</div>
+                    </div>
+                </div>
+
+                <!-- 关于此项目 -->
+                <div class="settings-section about-section">
+                    <h3 class="section-title">关于此项目</h3>
+                    <div class="about-project">
+                        <!-- 项目主卡（突出） -->
+                        <div class="about-card about-info-card">
+                            <img class="about-logo" src="icons/Frostart2606-256px-margined.png" alt="Frostart">
+                            <div class="about-card-body">
+                                <div class="about-card-title">
+                                    <strong class="about-name">Frostart</strong>
+                                    <span class="about-version" id="about-version">v0.1.10</span>
+                                </div>
+                                <p class="about-desc">一款可高度自定义的本地毛玻璃浏览器首页插件</p>
+                                <div class="about-meta">
+                                    <span class="about-tag">Chrome Extension MV3</span>
+                                </div>
+                                <p class="about-note">开源项目 · 欢迎 Fork 与二创（受 <a class="about-inline-link" href="LICENSE">GPL-3.0</a> 协议保护，详见 LICENSE）</p>
+                                <div class="about-links">
+                                    <a class="about-link-btn" href="https://github.com/Gledery/Frostart" target="_blank" rel="noopener" title="在 GitHub 查看">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1-.02-1.97-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.34.95.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11 11 0 015.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.77.11 3.06.74.8 1.18 1.83 1.18 3.09 0 4.43-2.69 5.4-5.25 5.68.41.36.78 1.07.78 2.16 0 1.56-.01 2.81-.01 3.19 0 .31.21.68.8.56C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+                                        <span>GitHub</span>
+                                    </a>
+                                    <a class="about-link-btn" href="PRIVACY.md" target="_blank" rel="noopener" title="查看隐私声明">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                        <span>隐私声明</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 作者次卡（克制） -->
+                        <a class="about-card about-author-card" href="https://space.bilibili.com/3461577804089941" target="_blank" rel="noopener">
+                            <img class="about-avatar" src="icons/gledery@250w_250h_1c.avif" alt="灰鸢 Gledery">
+                            <div class="about-card-body">
+                                <div class="about-card-title">
+                                    <strong class="about-name">灰鸢 Gledery</strong>
+                                    <span class="about-author-bio">独立开发者</span>
+                                </div>
+                                <div class="about-action-hint">点击跳转至B站主页</div>
+                            </div>
+                        </a>
+
+                        <!-- PhasWer 主站卡（关联项目） -->
+                        <a class="about-card about-site-card" href="https://phaswer.pages.dev/" target="_blank" rel="noopener">
+                            <img class="about-site-logo" src="icons/phaswer-logo.png" alt="PhasWer">
+                            <div class="about-card-body">
+                                <div class="about-card-title">
+                                    <strong class="about-name">PhasWer 工作室</strong>
+                                </div>
+                                <div class="about-action-hint">点击此处进入PhasWer 的小站~</div>
+                            </div>
+                        </a>
+
+                        <div class="about-footer">
+                            © 灰鸢Gledery 闲的没事用肝创建 (。・ω・。)<br>
+                            你滑到底了哇，去喝杯水吧~
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 模态框（快捷方式编辑） -->
+    <div class="modal-overlay" id="modal-overlay" role="dialog" aria-label="编辑快捷方式" aria-modal="true">
+        <div class="modal glass-effect">
+            <h3 class="modal-title" id="modal-title">添加快捷方式</h3>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label for="shortcut-name">名称</label>
+                    <input type="text" id="shortcut-name" class="text-input" placeholder="网站名称">
+                </div>
+                <div class="form-group">
+                    <label for="shortcut-url">网址</label>
+                    <input type="url" id="shortcut-url" class="text-input" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="shortcut-icon">图标 URL (可选)</label>
+                    <input type="url" id="shortcut-icon" class="text-input" placeholder="留空会自动获取">
+                    <div class="icon-upload-row">
+                        <button class="data-btn" id="icon-upload-btn" type="button" style="margin-top:8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            上传图标
+                        </button>
+                        <input type="file" id="icon-upload-input" accept="image/*" style="display:none;">
+                        <div class="icon-preview" id="icon-preview" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="modal-cancel" type="button">取消</button>
+                <button class="modal-btn confirm-btn" id="modal-confirm" type="button">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义引擎弹窗 -->
+    <div class="modal-overlay" id="engine-modal-overlay" role="dialog" aria-label="添加搜索引擎" aria-modal="true">
+        <div class="modal glass-effect" style="max-width:480px;">
+            <h3 class="modal-title">添加搜索引擎</h3>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label for="engine-name">名称</label>
+                    <input type="text" id="engine-name" class="text-input" placeholder="如：知乎">
+                </div>
+                <div class="form-group">
+                    <label for="engine-url">搜索 URL</label>
+                    <input type="text" id="engine-url" class="text-input" placeholder="https://www.zhihu.com/search?q=%s">
+                    <div class="setting-hint" style="margin-top:6px;">用 %s 代替关键词位置</div>
+                </div>
+                <div class="form-group">
+                    <label>图标（可选）</label>
+                    <div class="icon-upload-row">
+                        <button class="data-btn" id="engine-icon-upload-btn" type="button" style="margin-top:8px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            上传图标
+                        </button>
+                        <input type="file" id="engine-icon-upload-input" accept="image/*" style="display:none;">
+                        <div class="icon-preview" id="engine-icon-preview" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="engine-modal-cancel" type="button">取消</button>
+                <button class="modal-btn confirm-btn" id="engine-modal-confirm" type="button">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图标编辑器弹窗（裁切 / 缩放 / 背景） -->
+    <div class="modal-overlay" id="icon-editor-overlay" role="dialog" aria-label="调整图标" aria-modal="true">
+        <div class="modal glass-effect" style="max-width:420px;">
+            <h3 class="modal-title">调整图标</h3>
+            <div class="modal-content">
+                <div class="icon-editor-stage" id="icon-editor-stage">
+                    <img class="icon-editor-img" id="icon-editor-img" alt="图标预览" draggable="false">
+                    <div class="icon-editor-hint" id="icon-editor-hint">拖动图片平移 · 滚轮或滑块缩放</div>
+                </div>
+                <div class="form-group" style="margin-top:18px;">
+                    <div class="icon-editor-row">
+                        <label for="icon-editor-scale">缩放</label>
+                        <input type="range" id="icon-editor-scale" class="slider" min="50" max="400" value="100">
+                        <span class="slider-value" id="icon-editor-scale-value">100%</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>背景</label>
+                    <div class="icon-editor-bg-row">
+                        <label class="icon-editor-radio">
+                            <input type="radio" name="icon-editor-bg" value="global" checked>
+                            <span>跟随全局</span>
+                        </label>
+                        <label class="icon-editor-radio">
+                            <input type="radio" name="icon-editor-bg" value="transparent">
+                            <span>透明</span>
+                        </label>
+                        <label class="icon-editor-radio icon-editor-radio-color">
+                            <input type="radio" name="icon-editor-bg" value="color">
+                            <input type="color" id="icon-editor-bg-color" class="color-picker" value="#ffffff">
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="icon-editor-reset" type="button">重置</button>
+                <button class="modal-btn cancel-btn" id="icon-editor-cancel" type="button">取消</button>
+                <button class="modal-btn confirm-btn" id="icon-editor-confirm" type="button">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重置确认弹窗 -->
+    <div class="modal-overlay" id="reset-confirm-overlay" role="dialog" aria-label="确认恢复默认设置" aria-modal="true">
+        <div class="modal glass-effect" style="max-width:400px;">
+            <h3 class="modal-title reset-modal-title">恢复默认设置？</h3>
+            <p class="reset-modal-text">所有自定义设置都会被清空，没法撤销哦。</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="reset-confirm-cancel" type="button">取消</button>
+                <button class="modal-btn confirm-btn" id="reset-confirm-ok" type="button">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="js/changelog.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/kaomoji.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/sliders.js"></script>
+    <script src="js/panels.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/packager.js"></script>
+</body>
+</html>

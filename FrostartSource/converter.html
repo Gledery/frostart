@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frostart 数据转换工具</title>
+    <!--
+      主题：自动跟随 Frostart 主站设置
+            （扩展环境读 chrome.storage.local；纯网页读 localStorage）。
+
+      许可：GPL-3.0，与主项目一致。
+    -->
+    <style>
+    /* =========================================
+       1. 设计令牌（与主站 tokens.css 对齐，仅保留转换工具实际用到的）
+       ========================================= */
+    @property --wp-c1      { syntax: '<color>'; inherits: true; initial-value: #e8eef7; }
+    @property --wp-c2      { syntax: '<color>'; inherits: true; initial-value: #dde6f5; }
+    @property --wp-angle   { syntax: '<angle>'; inherits: true; initial-value: 135deg; }
+    @property --wp-solid   { syntax: '<color>'; inherits: true; initial-value: #e6eef7; }
+    @property --blob-c1-strong { syntax: '<color>'; inherits: true; initial-value: rgba(45,136,240,0.5); }
+    @property --blob-c1-soft   { syntax: '<color>'; inherits: true; initial-value: rgba(100,194,220,0.38); }
+    @property --blob-c2-strong { syntax: '<color>'; inherits: true; initial-value: rgba(171,138,255,0.5); }
+    @property --blob-c2-soft   { syntax: '<color>'; inherits: true; initial-value: rgba(140,200,255,0.38); }
+
+    :root {
+        --blur-amount: 8px;
+        --glass-opacity: 1;
+        --bg-base-alpha: 0.6;
+        --saturation-amount: 150%;
+
+        --radius-sm: 16px;
+        --radius-md: 24px;
+        --radius-lg: 32px;
+        --radius-pill: 9999px;
+
+        --time-fast: 0.15s;
+        --time-normal: 0.3s;
+        --time-slow: 0.8s;
+
+        --easing-enter: cubic-bezier(0.2, 0.8, 0.4, 1);
+        --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+        --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (prefers-color-scheme: light) {
+        :root {
+            --bg-primary: rgba(255, 255, 255, var(--bg-base-alpha));
+            --bg-secondary: rgba(255, 255, 255, calc(var(--bg-base-alpha) * 0.85));
+            --border-glass: 2px solid rgba(255, 255, 255, 0.3);
+            --text-primary: #1a1a2a;
+            --text-secondary: #4a4a5a;
+            --text-muted: #6a6a7a;
+            --gradient-page: linear-gradient(135deg, #D3E7FF 0%, #EAE2FF 100%);
+            --blob-alpha-strong: 0.5;
+            --blob-alpha-soft: 0.38;
+            --accent-color: #5b6ee1;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-primary: rgba(28, 28, 40, var(--bg-base-alpha));
+            --bg-secondary: rgba(28, 28, 40, calc(var(--bg-base-alpha) * 0.85));
+            --border-glass: 2px solid rgba(255, 255, 255, 0.12);
+            --text-primary: #f0f0f8;
+            --text-secondary: #b8b8c8;
+            --text-muted: #888898;
+            --gradient-page: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --blob-alpha-strong: 0.32;
+            --blob-alpha-soft: 0.22;
+            --accent-color: #7c8aef;
+        }
+    }
+
+    /* =========================================
+       2. 基础重置（与主站 base.css 对齐，仅保留必要部分）
+       ========================================= */
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: inherit;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+        font-family: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        color: var(--text-primary);
+        background: var(--gradient-page);
+        background-attachment: fixed;
+    }
+
+    button {
+        border: none;
+        background: none;
+        font-family: inherit;
+        cursor: pointer;
+        color: inherit;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--accent-color) 35%, transparent);
+        color: inherit;
+    }
+
+    /* =========================================
+       3. 壁纸系统（与主站 base.css 对齐，简化为默认渐变 + 光斑）
+       ========================================= */
+    .wallpaper-layer {
+        position: fixed;
+        inset: 0;
+        z-index: -3;
+        overflow: hidden;
+        background: linear-gradient(var(--wp-angle), var(--wp-c1), var(--wp-c2));
+        contain: strict;
+    }
+
+    .wallpaper-layer .blob {
+        position: absolute;
+        border-radius: 50%;
+        will-change: transform;
+        animation: blob-float 22s ease-in-out infinite;
+        transform: translate3d(-50%, -50%, 0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+
+    .wallpaper-layer .blob-1 {
+        width: 40vmax;
+        height: 40vmax;
+        background: radial-gradient(circle, var(--blob-c1-soft) 0%, transparent 60%);
+        top: 25%;
+        left: 45%;
+        animation-delay: -3s;
+    }
+
+    .wallpaper-layer .blob-2 {
+        width: 35vmax;
+        height: 35vmax;
+        background: radial-gradient(circle, var(--blob-c2-soft) 0%, transparent 60%);
+        top: 30%;
+        left: 55%;
+        animation-delay: -14s;
+    }
+
+    @keyframes blob-float {
+        0%, 100% { transform: translate3d(-50%, -50%, 0) scale(0.7) rotate(0deg); }
+        25%      { transform: translate3d(-45%, -55%, 0) scale(0.8) rotate(8deg); }
+        50%      { transform: translate3d(-55%, -45%, 0) scale(0.75) rotate(-6deg); }
+        75%      { transform: translate3d(-48%, -52%, 0) scale(0.85) rotate(4deg); }
+    }
+
+    /* =========================================
+       4. 玻璃效果 + 入场动画
+       ========================================= */
+    .glass-effect {
+        background-color: var(--bg-primary);
+        backdrop-filter: saturate(var(--saturation-amount)) blur(var(--blur-amount));
+        -webkit-backdrop-filter: saturate(var(--saturation-amount)) blur(var(--blur-amount));
+        border: var(--border-glass);
+        opacity: var(--glass-opacity);
+        --enter-target-opacity: var(--glass-opacity);
+    }
+
+    @keyframes enter-fade-up {
+        from { opacity: 0; transform: translateY(40px); }
+        to   { opacity: var(--enter-target-opacity, 1); transform: translateY(0); }
+    }
+
+    /* =========================================
+       5. 转换工具专属样式（原 pages.css 全量内联）
+       ========================================= */
+    .converter-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 24px 48px;
+    }
+
+    .converter-back {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: var(--radius-pill);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10;
+        opacity: 0;
+        animation: enter-fade-up var(--time-slow) var(--easing-enter) 0.15s forwards;
+    }
+
+    .converter-back svg { width: 18px; height: 18px; }
+
+    .converter-card {
+        width: 100%;
+        max-width: 640px;
+        padding: 36px;
+        border-radius: var(--radius-lg);
+        opacity: 0;
+        animation: enter-fade-up var(--time-slow) var(--easing-enter) forwards;
+    }
+
+    .converter-card h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .converter-subtitle {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 28px;
+    }
+
+    .converter-card .tab-nav {
+        display: flex;
+        gap: 6px;
+        padding: 4px;
+        margin-bottom: 24px;
+        border-bottom: none;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+    }
+
+    .converter-card .tab-btn {
+        flex: 1;
+        padding: 10px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        border-radius: calc(var(--radius-sm) - 4px);
+        transition: color var(--time-fast) var(--easing-standard),
+                    background-color var(--time-fast) var(--easing-standard),
+                    box-shadow var(--time-fast) var(--easing-standard);
+    }
+
+    .converter-card .tab-btn.active {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 70%, #8b5cf6));
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-color) 25%, transparent);
+    }
+
+    .converter-card .tab-panel { display: none; }
+    .converter-card .tab-panel.active { display: block; }
+
+    .drop-zone {
+        border: 2px dashed color-mix(in srgb, var(--accent-color) 35%, transparent);
+        border-radius: var(--radius-md);
+        padding: 48px 24px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 16px;
+        color: var(--text-secondary);
+        transition: border-color var(--time-fast) var(--easing-standard),
+                    background-color var(--time-fast) var(--easing-standard);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+        border-color: var(--accent-color);
+        background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+    }
+
+    .drop-zone svg {
+        width: 40px;
+        height: 40px;
+        color: var(--accent-color);
+        margin-bottom: 12px;
+    }
+
+    .drop-zone p { font-size: 14px; color: var(--text-secondary); }
+    .drop-zone .ext { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .converter-preview {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        margin-top: 16px;
+        max-height: 320px;
+        overflow-y: auto;
+        font-size: 12px;
+        line-height: 1.6;
+        font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: var(--text-secondary);
+    }
+
+    .converter-preview strong { color: var(--text-primary); }
+
+    .converter-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+    }
+
+    .converter-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+        transition: transform var(--time-fast) var(--easing-standard),
+                    box-shadow var(--time-fast) var(--easing-standard),
+                    opacity var(--time-fast) var(--easing-standard);
+    }
+
+    .converter-actions button:not(:disabled):hover { transform: translateY(-2px); }
+
+    .converter-actions .btn-import-now {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: #fff;
+    }
+    .converter-actions .btn-import-now:hover:not(:disabled) {
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
+    }
+
+    .converter-actions .btn-primary {
+        background: linear-gradient(135deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 70%, #8b5cf6));
+        color: #fff;
+    }
+    .converter-actions .btn-primary:hover:not(:disabled) {
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-color) 35%, transparent);
+    }
+
+    .converter-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .converter-actions button:not(:disabled):active { transform: scale(0.85); }
+    .converter-actions svg { width: 16px; height: 16px; }
+
+    .converter-info {
+        background: color-mix(in srgb, var(--accent-color) 6%, var(--bg-secondary));
+        border-radius: var(--radius-sm);
+        padding: 14px 16px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-top: 20px;
+    }
+    .converter-info strong { color: var(--text-primary); }
+
+    /* Toast */
+    #toast.toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        top: auto;
+        transform: translateX(-50%) translateY(80px);
+        padding: 12px 24px;
+        border-radius: var(--radius-pill);
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        background: color-mix(in srgb, var(--text-primary) 85%, transparent);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: none;
+        box-shadow: var(--shadow-xl);
+        z-index: 999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity var(--time-normal) var(--easing-enter),
+                    transform var(--time-normal) var(--easing-enter);
+    }
+    #toast.toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    #toast.toast.error {
+        background: rgba(217, 69, 69, 0.92);
+    }
+
+    /* 无障碍：尊重减少动画偏好 */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+    </style>
+</head>
+<body>
+    <!-- 壁纸层：默认渐变光斑（与主站一致） -->
+    <div class="wallpaper-layer" aria-hidden="true">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <!-- 返回按钮：仅作为扩展页面打开时才有意义；独立网页打开时点击会 404，无副作用 -->
+    <a href="newtab.html" class="converter-back glass-effect" title="返回新标签页">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回新标签页
+    </a>
+
+    <div class="converter-page">
+        <div class="converter-card glass-effect">
+            <h1>Frostart 数据转换</h1>
+            <p class="converter-subtitle">在 iTab 和 Frostart 格式之间互相转换</p>
+
+            <nav class="tab-nav" role="tablist">
+                <button class="tab-btn active" data-ctab="import" role="tab">iTab → Frostart</button>
+                <button class="tab-btn" data-ctab="export" role="tab">Frostart → iTab</button>
+            </nav>
+
+            <!-- 导入面板 -->
+            <div class="tab-panel active" data-cpanel="import">
+                <div class="drop-zone" id="itab-drop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>点击或拖拽 iTab 备份文件到这里</p>
+                    <p class="ext">支持 .itabdata 格式</p>
+                    <input type="file" id="itab-input" accept=".itabdata,.json" style="display:none;">
+                </div>
+                <div class="converter-preview" id="import-preview" style="display:none;"></div>
+                <div class="converter-actions">
+                    <button class="btn-primary" id="convert-btn" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        转换并下载
+                    </button>
+                    <button class="btn-import-now" id="import-now-btn" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        导入到新标签页
+                    </button>
+                </div>
+            </div>
+
+            <!-- 导出面板 -->
+            <div class="tab-panel" data-cpanel="export">
+                <div class="drop-zone" id="frostart-drop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>点击或拖拽 Frostart 备份文件</p>
+                    <p class="ext">支持 .frostartdata 格式</p>
+                    <input type="file" id="frostart-input" accept=".frostartdata,.json" style="display:none;">
+                </div>
+                <div class="converter-actions" style="margin-top:0;">
+                    <button id="export-current-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        从当前新标签页导出
+                    </button>
+                </div>
+                <div class="converter-preview" id="export-preview" style="display:none;"></div>
+                <div class="converter-actions">
+                    <button class="btn-primary" id="export-itab-btn" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        转换为 iTab 格式
+                    </button>
+                </div>
+            </div>
+
+            <div class="converter-info">
+                <strong>格式说明</strong><br>
+                <strong>.itabdata</strong> — iTab 插件备份格式，包含导航图标、搜索引擎、壁纸等<br>
+                <strong>.frostartdata</strong> — Frostart 新标签页格式，包含全部设置与快捷方式<br>
+                转换时会自动映射快捷方式、搜索引擎、主题、壁纸、时钟设置等
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+/* =========================================
+   Frostart 数据转换工具主逻辑
+   ========================================= */
+
+/* Frostart 默认设置（与 settings.js defaultSettings 手动对齐）
+   ⚠️ 修改 settings.js 的 defaultSettings 后需同步更新此处。 */
+const FROSTART_DEFAULTS = {
+    theme: 'auto',
+    accentColor: '',
+    blur: 8,
+    opacity: 100,
+    saturation: 150,
+    iconSize: 72,
+    borderRadius: 24,
+    iconBgOpacity: -1,
+    iconBlur: -1,
+    shortcutGap: 24,
+    shortcutNameSize: 13,
+    customFont: '',
+    clockFont: '',
+    clockColor: '',
+    dateColor: '',
+    shortcutNameColor: '',
+    searchTextColor: '',
+    searchPlaceholderColor: '',
+    globalTextColor: '',
+    clockSize: 88,
+    searchWidth: 650,
+    contentPosition: 18,
+    iconMaxWidth: 960,
+    iconMaxWidthUnit: 'px',
+    timeFormat: 24,
+    showSeconds: false,
+    showWeek: true,
+    showLunar: false,
+    wallpaperMode: 'gradient',
+    wallpaperImage: '',
+    wallpaperColor: '#e6eef7',
+    wallpaperMask: 20,
+    wallpaperBlur: 0,
+    gradientColor1: '#e8eef7',
+    gradientColor2: '#dde6f5',
+    gradientAngle: 135,
+    blobColor1: '',
+    blobColor2: '',
+    kaomoji: true,
+    searchEngine: 'google',
+    customEngines: [],
+    searchInNewTab: false,
+    openInNewTab: true,
+    shortcuts: []
+};
+
+let itabData = null;
+let frostartData = null;
+
+/* =========================================
+   工具函数
+   ========================================= */
+function showToast(msg, isError) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function downloadFile(filename, content) {
+    const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+/* 转义导入数据中的不可信字段，防止通过 innerHTML 触发 XSS。
+   导入的 iTab / Frostart 备份文件可由攻击者构造，name/url 必须当作用户输入处理。 */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text == null ? '' : text);
+    return div.innerHTML;
+}
+
+/* =========================================
+   存储适配 
+   主站 SettingsManager 在扩展环境用 chrome.storage.local，
+   纯网页环境降级到 localStorage。转换工具必须使用同一份存储，
+   否则"导出当前数据"读不到、"立即导入"写了主站看不到。
+   ========================================= */
+function isExtensionEnv() {
+    return typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
+}
+
+function readFrostartSettings() {
+    return new Promise((resolve) => {
+        if (isExtensionEnv()) {
+            chrome.storage.local.get(['frostartSettings'], (result) => {
+                resolve((result && result.frostartSettings) || null);
+            });
+        } else {
+            try {
+                const raw = localStorage.getItem('frostartSettings');
+                resolve(raw ? JSON.parse(raw) : null);
+            } catch (e) { resolve(null); }
+        }
+    });
+}
+
+function writeFrostartSettings(settings) {
+    return new Promise((resolve) => {
+        if (isExtensionEnv()) {
+            chrome.storage.local.set({
+                frostartSettings: settings,
+                frostartSettings_backup: settings
+            }, () => resolve());
+        } else {
+            try {
+                localStorage.setItem('frostartSettings', JSON.stringify(settings));
+                localStorage.setItem('frostartSettings_backup', JSON.stringify(settings));
+            } catch (e) { /* 配额超限忽略，调用方已下载文件兜底 */ }
+            resolve();
+        }
+    });
+}
+
+/* =========================================
+   Tab 切换
+   ========================================= */
+document.querySelectorAll('[data-ctab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-ctab]').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[data-cpanel]').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelector(`[data-cpanel="${btn.dataset.ctab}"]`).classList.add('active');
+    });
+});
+
+/* =========================================
+   iTab → Frostart 转换
+   ========================================= */
+function convertItabToFrostart(itab) {
+    const base = itab.baseConfig || {};
+    const nav = itab.navConfig || [];
+
+    const shortcuts = [];
+    let id = 1;
+    nav.forEach(group => {
+        (group.children || []).forEach(item => {
+            if (item.url) {
+                shortcuts.push({
+                    id: id++,
+                    name: item.name || '未命名',
+                    url: item.url,
+                    icon: item.src || ''
+                });
+            }
+        });
+    });
+
+    const engineMap = {
+        google: 'google',
+        bing: 'bing',
+        baidu: 'baidu',
+        duckduckgo: 'duckduckgo',
+        sogou: 'sougou', so360: null,
+        yahoo: 'yahoo',
+        bilibili: 'bilibili',
+        zhihu: 'zhihu',
+        weibo: 'weibo',
+        douban: 'douban',
+        xiaohongshu: 'xiaohongshu', xhs: 'xiaohongshu',
+        douyin: 'douyin',
+        toutiao: 'toutiao',
+        taobao: 'taobao',
+        jd: 'jd', jingdong: 'jd',
+        github: 'github',
+        googlescholar: 'googlescholar', scholar: 'googlescholar'
+    };
+    let searchEngine = 'google';
+    const customEngines = [];
+    const itabEngines = base.searchEngine || [];
+    const useSearch = base.useSearch || '';
+
+    const mappedToBuiltin = new Set(
+        Object.entries(engineMap).filter(([, v]) => v).map(([k]) => k)
+    );
+    if (mappedToBuiltin.has(useSearch)) {
+        searchEngine = engineMap[useSearch];
+    }
+
+    itabEngines.forEach(en => {
+        if (mappedToBuiltin.has(en.key)) {
+            if (useSearch === en.key) searchEngine = engineMap[en.key];
+            return;
+        }
+        if (en.href) {
+            const cid = 'custom_' + en.key;
+            customEngines.push({
+                id: cid,
+                name: en.title || en.key,
+                url: en.href
+            });
+            if (useSearch === en.key) searchEngine = cid;
+        }
+    });
+
+    const themeMode = base.theme?.mode || 'light';
+    const wp = base.wallpaper || {};
+    let wallpaperMode = 'gradient';
+    if (wp.type === 4 && wp.src) wallpaperMode = 'image';
+    if (wp.type === 1) wallpaperMode = 'solid';
+
+    const time = base.time || {};
+    const icon = base.icon || {};
+
+    const fromItab = {
+        theme: themeMode === 'dark' ? 'dark' : 'light',
+        shortcuts,
+        searchEngine,
+        customEngines,
+        searchInNewTab: !!(base.open && base.open.searchBlank),
+        openInNewTab: !(base.open && base.open.iconBlank === false),
+        wallpaperMode,
+        wallpaperImage: wp.src || '',
+        wallpaperMask: wp.mask != null ? Math.round(wp.mask * 100) : undefined,
+        wallpaperBlur: wp.blur || undefined,
+        timeFormat: time.hour24 ? 24 : (time.hour24 === false ? 12 : undefined),
+        showSeconds: time.sec === true ? true : undefined,
+        clockColor: time.color || undefined,
+        clockSize: time.size || undefined,
+        customFont: time.font || undefined,
+        iconSize: icon.iconSize || undefined,
+        borderRadius: icon.iconRadius || undefined,
+        shortcutNameSize: icon.nameSize || undefined,
+        shortcutNameColor: icon.nameColor || undefined,
+        iconBgOpacity: icon.opactiy != null ? Math.round(icon.opactiy * 100) : undefined
+    };
+
+    Object.keys(fromItab).forEach(k => {
+        if (fromItab[k] === undefined) delete fromItab[k];
+    });
+
+    return { ...FROSTART_DEFAULTS, ...fromItab };
+}
+
+/* =========================================
+   Frostart → iTab 转换
+   ========================================= */
+function convertFrostartToItab(fs) {
+    const navChildren = (fs.shortcuts || []).map((s, i) => ({
+        id: 'fs_' + i,
+        url: s.url,
+        type: 'icon',
+        name: s.name,
+        src: s.icon || '',
+        backgroundColor: '#FFFFFF',
+        iconText: s.name.substring(0, 3),
+        view: 0
+    }));
+
+    const searchEngine = [
+        { key: 'google', title: 'Google', href: 'https://www.google.com/search?q=' },
+        { key: 'bing', title: '必应', href: 'https://www.bing.com/search?q=' },
+        { key: 'baidu', title: '百度', href: 'https://www.baidu.com/s?wd=' }
+    ];
+    (fs.customEngines || []).forEach(en => {
+        searchEngine.push({ key: en.id, title: en.name, href: en.url });
+    });
+
+    return {
+        baseConfig: {
+            lang: 'zh-CN',
+            searchEngine,
+            useSearch: fs.searchEngine || 'google',
+            theme: {
+                mode: fs.theme === 'dark' ? 'dark' : 'light',
+                system: fs.theme === 'auto',
+                color: '#1890FF'
+            },
+            wallpaper: {
+                mask: (fs.wallpaperMask || 0) / 100,
+                blur: fs.wallpaperBlur || 0,
+                type: fs.wallpaperMode === 'image' ? 4 : (fs.wallpaperMode === 'solid' ? 1 : 0),
+                src: fs.wallpaperImage || ''
+            },
+            time: {
+                show: true,
+                size: fs.clockSize || 88,
+                color: fs.clockColor || '#FFFFFF',
+                hour24: (fs.timeFormat || 24) === 24,
+                sec: fs.showSeconds || false,
+                font: fs.customFont || ''
+            },
+            icon: {
+                iconSize: fs.iconSize || 72,
+                iconRadius: fs.borderRadius || 24,
+                nameSize: fs.shortcutNameSize || 13,
+                nameColor: fs.shortcutNameColor || '#fff',
+                opactiy: fs.iconBgOpacity >= 0 ? fs.iconBgOpacity / 100 : 1
+            },
+            open: {
+                searchBlank: fs.searchInNewTab || false,
+                iconBlank: fs.openInNewTab !== false
+            }
+        },
+        navConfig: [{
+            id: '1',
+            name: '主页',
+            icon: 'home',
+            children: navChildren
+        }]
+    };
+}
+
+/* =========================================
+   导入逻辑
+   ========================================= */
+const itabDrop = document.getElementById('itab-drop');
+const itabInput = document.getElementById('itab-input');
+
+itabDrop.addEventListener('click', () => itabInput.click());
+itabDrop.addEventListener('dragover', (e) => { e.preventDefault(); itabDrop.classList.add('dragover'); });
+itabDrop.addEventListener('dragleave', () => itabDrop.classList.remove('dragover'));
+itabDrop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    itabDrop.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleItabFile(e.dataTransfer.files[0]);
+});
+itabInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleItabFile(e.target.files[0]);
+});
+
+function handleItabFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            itabData = JSON.parse(reader.result);
+            const converted = convertItabToFrostart(itabData);
+            const stats = `${converted.shortcuts.length} 个快捷方式，${converted.customEngines.length} 个自定义引擎`;
+            document.getElementById('import-preview').style.display = 'block';
+            document.getElementById('import-preview').innerHTML =
+                `<strong>转换预览</strong>\n${stats}\n\n快捷方式列表:\n${converted.shortcuts.map(s => `  • ${s.name} → ${s.url.substring(0,50)}`).join('\n')}`;
+            document.getElementById('convert-btn').disabled = false;
+            document.getElementById('import-now-btn').disabled = false;
+            showToast('解析成功~ ' + stats);
+        } catch (err) {
+            showToast('文件解析失败：' + err.message, true);
+        }
+    };
+    reader.readAsText(file);
+}
+
+document.getElementById('convert-btn').addEventListener('click', () => {
+    if (!itabData) return;
+    const converted = convertItabToFrostart(itabData);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadFile(`frostart-backup-${date}.frostartdata`, converted);
+    showToast('已下载 .frostartdata 文件');
+});
+
+document.getElementById('import-now-btn').addEventListener('click', async () => {
+    if (!itabData) return;
+    const converted = convertItabToFrostart(itabData);
+    await writeFrostartSettings(converted);
+    showToast('已导入~ 正在跳转到新标签页…');
+    setTimeout(() => window.location.href = 'newtab.html', 1000);
+});
+
+/* =========================================
+   导出逻辑
+   ========================================= */
+const frostartDrop = document.getElementById('frostart-drop');
+const frostartInput = document.getElementById('frostart-input');
+
+frostartDrop.addEventListener('click', () => frostartInput.click());
+frostartDrop.addEventListener('dragover', (e) => { e.preventDefault(); frostartDrop.classList.add('dragover'); });
+frostartDrop.addEventListener('dragleave', () => frostartDrop.classList.remove('dragover'));
+frostartDrop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    frostartDrop.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleFrostartFile(e.dataTransfer.files[0]);
+});
+frostartInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFrostartFile(e.target.files[0]);
+});
+
+function handleFrostartFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            frostartData = JSON.parse(reader.result);
+            showExportPreview(frostartData);
+        } catch (err) {
+            showToast('文件解析失败：' + err.message, true);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function showExportPreview(data) {
+    const stats = `${(data.shortcuts || []).length} 个快捷方式`;
+    document.getElementById('export-preview').style.display = 'block';
+    document.getElementById('export-preview').innerHTML =
+        `<strong>数据预览</strong>\n${stats}\n\n快捷方式：\n${(data.shortcuts || []).map(s => `  • ${escapeHtml(s.name)}`).join('\n')}`;
+    document.getElementById('export-itab-btn').disabled = false;
+}
+
+document.getElementById('export-current-btn').addEventListener('click', async () => {
+    const settings = await readFrostartSettings();
+    if (!settings) {
+        showToast('当前没有存储的数据哦', true);
+        return;
+    }
+    frostartData = settings;
+    showExportPreview(frostartData);
+    showToast('已读取当前数据~');
+});
+
+document.getElementById('export-itab-btn').addEventListener('click', () => {
+    if (!frostartData) return;
+    const converted = convertFrostartToItab(frostartData);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadFile(`itab-backup-${date}.itabdata`, converted);
+    showToast('已下载 .itabdata 文件~');
+});
+    </script>
+</body>
+</html>
