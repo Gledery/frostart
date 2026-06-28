@@ -1,6 +1,6 @@
 # 隐私声明
 
-**最后更新：2025-06-22**
+**最后更新：2026-06-26**
 
 **关于隐私：**
 
@@ -23,8 +23,9 @@
 
 - **自定义字体**：当你设置了非系统字体时，浏览器会向 `fonts.googleapis.com`（Google Fonts）请求字体文件
 - **默认图标**：快捷方式未上传自定义图标时，浏览器会向 `icons.duckduckgo.com`（DuckDuckGo favicon 服务）请求该网站的图标。请求 URL 形如 `https://icons.duckduckgo.com/ip3/<目标域名>.ico`
+- **必应每日壁纸**：当你选择"必应每日壁纸"模式时，浏览器会向 `www.bing.com` 请求壁纸数据和图片。数据接口形如 `https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN`，图片 URL 形如 `https://www.bing.com/az/hprichbg/rb/<图片名>_1920x1080.jpg`
 
-鸢没有服务器，既看不到也无法获取这些请求的内容。若你希望完全不发起任何外部请求，可只使用系统字体并为快捷方式上传自定义图标。
+鸢没有服务器，既看不到也无法获取这些请求的内容。若你希望完全不发起任何外部请求，可只使用系统字体、为快捷方式上传自定义图标，且不开启必应每日壁纸模式。
 
 ---
 
@@ -38,13 +39,17 @@
 
 ## 权限
 
-manifest.json 里只申请了一个权限：
+manifest.json 中申请了以下权限和主机权限：
 
 ```json
 {
-  "permissions": ["storage"]
+  "permissions": ["storage"],
+  "host_permissions": ["*://*.bing.com/*"]
 }
 ```
+
+- `storage`：用于在本地浏览器中保存你的配置（壁纸、快捷方式、主题等）
+- `host_permissions`（`*.bing.com`）：用于必应每日壁纸功能，允许浏览器向 Bing 官方接口请求壁纸数据和图片
 
 ---
 
@@ -58,7 +63,7 @@ manifest.json 里只申请了一个权限：
 
 ---
 
-## 开源透明
+## 关于开源
 
 此插件是开源的：
 
@@ -67,7 +72,7 @@ manifest.json 里只申请了一个权限：
 
 ---
 
-## 联系
+## 联系和贡献
 
 对本声明有疑问、或者发现有什么行为跟声明对不上的，欢迎反馈：
 
@@ -78,4 +83,4 @@ manifest.json 里只申请了一个权限：
 
 ## 声明变更
 
-本声明可能随项目迭代更新。重大变更会在 [更新日志](./changelog.html) 里说明。继续用插件就视为接受最新版本。
+本声明可能随项目迭代更新。功能性变更会在 [更新日志](./changelog.html) 里说明。Frostart不会自动更新，如果你手动下载并更新即视为接受最新版本。

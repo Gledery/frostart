@@ -143,34 +143,6 @@ const SettingsManager = {
     },
 
     _migrateSettings(settings) {
-        if (!settings.version) {
-            settings.version = '1.0.0';
-        }
-        if (settings.version === '1.0.0' && !settings.openInNewTab) {
-            settings.openInNewTab = true;
-        }
-        // 1.1.x 之前没有 pinnedEngines / engineQuickSwitch：用默认值补齐
-        if (!Array.isArray(settings.pinnedEngines)) {
-            settings.pinnedEngines = this.defaultSettings.pinnedEngines.slice();
-        }
-        if (typeof settings.engineQuickSwitch !== 'boolean') {
-            settings.engineQuickSwitch = this.defaultSettings.engineQuickSwitch;
-        }
-        // 自定义主题色：老配置无此字段时置空（表示用主题默认 accent）
-        if (typeof settings.accentColor !== 'string') {
-            settings.accentColor = '';
-        }
-        // 角落颜文字开关：老配置无此字段时默认开启
-        if (typeof settings.kaomoji !== 'boolean') {
-            settings.kaomoji = true;
-        }
-        // 自定义光斑颜色：老配置无此字段时置空（表示跟随渐变派生）
-        if (typeof settings.blobColor1 !== 'string') {
-            settings.blobColor1 = '';
-        }
-        if (typeof settings.blobColor2 !== 'string') {
-            settings.blobColor2 = '';
-        }
         settings.version = this.VERSION;
         return settings;
     },

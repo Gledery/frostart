@@ -53,8 +53,7 @@ const Packager = {
         // 文档
         'LICENSE',
         'PRIVACY.md',
-        'README.md',
-        'favicon.png'
+        'README.md'
     ],
 
     /* 把相对路径解析为扩展内可 fetch 的绝对 URL */
@@ -83,13 +82,12 @@ const Packager = {
         if (!btn) return;
         if (btn.disabled) return; // 防重复点击
 
-        // 环境检测：打包靠 fetch 读取扩展自身文件，
-        // 必须运行在 chrome-extension:// 协议下。
-        // 本地 file:// 直接打开 newtab.html 时浏览器会拦截 fetch，读不到文件。
-        const isExtensionEnv = typeof chrome !== 'undefined'
-            && chrome.runtime && typeof chrome.runtime.getURL === 'function';
-        if (!isExtensionEnv) {
-            showToast('需要先把插件加载到浏览器才能打包哦（在扩展的新标签页里点击）', 'error');
+        // 环境检测：打包靠 fetch 读取项目自身文件。
+        // 扩展环境（chrome-extension:）通过 chrome.runtime.getURL 抓取；
+        // 在线网页（http/https）通过相对路径抓取，二者皆可。
+        // 仅本地 file:// 直接打开时浏览器会拦截 fetch，读不到文件。
+        if (location.protocol === 'file:') {
+            showToast('本地直接打开无法打包哦，请用在线网页版或已加载的扩展新标签页', 'error');
             return;
         }
 

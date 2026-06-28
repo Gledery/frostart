@@ -24,6 +24,8 @@ function initSliders() {
         { id: 'icon-max-width-slider', key: 'iconMaxWidth', unit: 'px', cssVar: '--icon-max-width', customHandler: handleIconMaxWidthChange },
         { id: 'wallpaper-mask-slider', key: 'wallpaperMask', unit: '%', cssVar: '--wallpaper-mask-opacity', transform: v => v / 100 },
         { id: 'wallpaper-blur-slider', key: 'wallpaperBlur', unit: 'px', cssVar: '--wallpaper-image-blur' },
+        { id: 'bing-mask-slider', key: 'wallpaperMask', unit: '%', cssVar: '--wallpaper-mask-opacity', transform: v => v / 100 },
+        { id: 'bing-blur-slider', key: 'wallpaperBlur', unit: 'px', cssVar: '--wallpaper-image-blur' },
         { id: 'icon-blur-slider', key: 'iconBlur', unit: 'px', customHandler: handleIconBlurChange },
         { id: 'icon-bg-slider', key: 'iconBgOpacity', unit: '%', customHandler: handleIconBgChange }
     ];

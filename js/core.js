@@ -1423,9 +1423,13 @@ function showToast(message, type = 'success') {
 
 /* =========================================
    更新检查
+   直接读 GitHub 上 manifest.json 的 version 字段做对比。
+   一旦改仓库名 / 默认分支名，下面两个 URL 必须同步修改。
    ========================================= */
-const UPDATE_API = 'https://api.github.com/repos/Gledery/Frostart/releases/latest';
-const UPDATE_RELEASES_URL = 'https://github.com/Gledery/Frostart/releases';
+const UPDATE_REPO = 'Gledery/Frostart';
+const UPDATE_BRANCH = 'main';
+const UPDATE_API = `https://raw.githubusercontent.com/${UPDATE_REPO}/${UPDATE_BRANCH}/manifest.json`;
+const UPDATE_RELEASES_URL = `https://github.com/${UPDATE_REPO}/archive/refs/heads/${UPDATE_BRANCH}.zip`;
 const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 小时节流
 
 /* 语义化版本比较：返回 1(a>b) / -1(a<b) / 0(相等) */
@@ -1444,10 +1448,9 @@ function initUpdateCheck() {
     const checkBtn = document.getElementById('check-update-btn');
     if (checkBtn) {
         checkBtn.addEventListener('click', () => {
-            // 有更新时点击跳转下载页，否则执行检查
+            // 有更新时点击直接下载最新源码 zip，否则执行检查
             if (checkBtn.classList.contains('has-update')) {
-                const url = localStorage.getItem('frostart_update_url') || UPDATE_RELEASES_URL;
-                window.open(url, '_blank', 'noopener');
+                window.open(UPDATE_RELEASES_URL, '_blank', 'noopener');
             } else {
                 checkForUpdates(true);
             }
@@ -1482,21 +1485,18 @@ async function checkForUpdates(manual) {
         const res = await fetch(UPDATE_API);
 
         let latestVersion = null;
-        let releaseUrl = UPDATE_RELEASES_URL;
 
         if (res.ok) {
             const data = await res.json();
-            latestVersion = (data.tag_name || '').replace(/^v/, '');
-            if (data.html_url) releaseUrl = data.html_url;
+            latestVersion = data.version || null;
         }
-        // 404 = 还没有 Release，静默处理
+        // 404 = 仓库还没推上去 / 私有 / 网络挂了，静默处理
 
         // 缓存结果
         try {
             localStorage.setItem('frostart_update_check', String(Date.now()));
             if (latestVersion) {
                 localStorage.setItem('frostart_update_latest', latestVersion);
-                localStorage.setItem('frostart_update_url', releaseUrl);
             } else {
                 localStorage.removeItem('frostart_update_latest');
             }
@@ -1510,7 +1510,7 @@ async function checkForUpdates(manual) {
             }
         }
 
-        updateButtonState(currentVersion, latestVersion, releaseUrl);
+        updateButtonState(currentVersion, latestVersion);
     } catch (e) {
         if (manual) showToast('检查更新失败，可能是网络问题', 'error');
         updateButtonState(currentVersion);
@@ -1522,7 +1522,7 @@ async function checkForUpdates(manual) {
 }
 
 /* 有新版时把按钮变成高亮态，无新版时恢复默认 */
-function updateButtonState(currentVersion, latestVersion, releaseUrl) {
+function updateButtonState(currentVersion, latestVersion) {
     const btn = document.getElementById('check-update-btn');
     const label = document.getElementById('check-update-label');
     if (!btn || !label) return;
