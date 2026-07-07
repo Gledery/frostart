@@ -243,7 +243,7 @@ body.hide-shortcut-names .shortcut-item {
 .shortcut-icon img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 /* SVG 品牌 logo：矢量缩放清晰，去掉对位图优化的渲染属性避免锯齿 */
@@ -2339,7 +2339,8 @@ button.about-link-btn {
     width: 40px;
     height: 40px;
     border-radius: var(--radius-sm);
-    background-size: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
     background-position: center;
     border: var(--border-glass);
     flex-shrink: 0;
@@ -2372,9 +2373,11 @@ button.about-link-btn {
 .icon-editor-img {
     width: 100%;
     height: 100%;
-    /* 与最终快捷方式容器保持同一 object-fit，保证「所见即所得」，
-       transform（缩放/平移）在编辑器与渲染端的视觉效果完全一致 */
-    object-fit: cover;
+    /* 与最终快捷方式容器保持同一 object-fit，保证所见即所得，
+       transform（缩放/平移）在编辑器与渲染端的视觉效果完全一致。
+       用 contain：非正方形图片先完整显示，用户放大裁切 + 平移定位；
+       cover 会在 scale=1 就裁掉超出部分，且 transform 无法找回被丢弃的像素 */
+    object-fit: contain;
     transform-origin: center center;
     transform: translate(0, 0) scale(1);
     cursor: grab;

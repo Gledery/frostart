@@ -1396,6 +1396,42 @@ function initDataManagement() {
             location.reload();
         });
     }
+
+    // 修复：扩展环境（chrome-extension://）下用 <a> 直接打开 .md 时，Chrome 以
+    // text/plain 加载且响应头不带 charset，会用系统默认编码（中文 Windows 上为
+    // GBK）解析 UTF-8 文件，导致中文乱码。GitHub / 在线网页因服务器返回
+    // charset=utf-8 不受影响。这里改为 fetch（Response.text() 始终按 UTF-8 解码）
+    // 后在新标签页以正确 charset 显示，对正常环境也无副作用。
+    document.querySelectorAll('a.about-link-btn[href$=".md"]').forEach(a => {
+        a.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const href = a.getAttribute('href');
+            try {
+                const res = await fetch(href);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                const win = window.open('', '_blank');
+                if (!win) return; // 弹窗被拦截，保持已阻止的默认行为
+                const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                win.document.open();
+                win.document.write(
+                    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+                    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+                    '<title>' + esc(href) + '</title>' +
+                    '<style>' +
+                    'body{margin:0;background:#1a1a1a;color:#e6e6e6;' +
+                    'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.6}' +
+                    'pre{padding:24px;white-space:pre-wrap;word-break:break-word}' +
+                    '@media(prefers-color-scheme:light){body{background:#fafafa;color:#222}}' +
+                    '</style></head><body><pre>' + esc(text) + '</pre></body></html>'
+                );
+                win.document.close();
+            } catch (err) {
+                // fetch 失败（如本地 file:// 打开被浏览器拦截），回退到原生打开
+                window.open(href, '_blank');
+            }
+        });
+    });
 }
 
 /* =========================================

@@ -115,6 +115,22 @@ Frostart/
 
 之所以不上框架，一是插件就这么大没必要，二是想保持代码可直接阅读，这样想抄哪段直接拿走就行（只要遵守 GPL-3.0协议都欢迎）。
 
+### 浏览器兼容性
+
+基于 Manifest V3，只支持 Chromium 内核浏览器，最低版本要求 Chrome **88+**：
+
+| 浏览器 | 状态 | 说明 |
+| --- | --- | --- |
+| Chrome | ✅ 主要测试环境 | 88+ |
+| Edge | ✅ 已测 | Chromium 内核，88+ |
+| Brave | 🟢 应该可用 | 未深度测试 |
+| Vivaldi | 🟢 应该可用 | 未深度测试 |
+| Arc | 🟢 应该可用 | 未深度测试 |
+| Firefox | ❌ 不支持 | 无 MV3 支持 |
+| Safari | ❌ 不支持 | 需另写 Safari App Extension |
+
+> 权限相关的说明（为什么需要 `storage` 和 `*.bing.com`）写在 [PRIVACY.md](./PRIVACY.md) 里
+
 ---
 
 ## 性能
