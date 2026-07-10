@@ -163,6 +163,18 @@ function applySettings() {
 /* =========================================
    壁纸渲染
    ========================================= */
+// blob alpha 值缓存：仅在主题切换时变化，避免 applyWallpaper 每次都触发 getComputedStyle 强制回流
+let _blobAlphaCache = null;
+function getBlobAlphas() {
+    if (_blobAlphaCache) return _blobAlphaCache;
+    const cs = getComputedStyle(document.documentElement);
+    _blobAlphaCache = {
+        strong: parseFloat(cs.getPropertyValue('--blob-alpha-strong')) || 0.5,
+        soft: parseFloat(cs.getPropertyValue('--blob-alpha-soft')) || 0.38,
+    };
+    return _blobAlphaCache;
+}
+
 function applyWallpaper(settings) {
     document.body.dataset.wallpaper = settings.wallpaperMode;
 
@@ -204,9 +216,11 @@ function applyWallpaper(settings) {
         : (settings.wallpaperMode === 'solid' ? hexToBlobRgb(solid, 0) : hexToBlobRgb(c1, 0));
     const blob2Rgb = customBlob2 ? hexToRgbTriplet(customBlob2)
         : (settings.wallpaperMode === 'solid' ? hexToBlobRgb(solid, 40) : hexToBlobRgb(c2, 0));
-    const cs = getComputedStyle(root);
-    const alphaStrong = parseFloat(cs.getPropertyValue('--blob-alpha-strong')) || 0.5;
-    const alphaSoft = parseFloat(cs.getPropertyValue('--blob-alpha-soft')) || 0.38;
+    // 缓存 blob alpha 值，避免每次 applyWallpaper 都 getComputedStyle 触发强制回流。
+    // alpha 值仅在主题切换时变化，由 applyTheme() 清除缓存。
+    const alphas = getBlobAlphas();
+    const alphaStrong = alphas.strong;
+    const alphaSoft = alphas.soft;
     const blobC1Strong = `rgba(${blob1Rgb}, ${alphaStrong})`;
     const blobC1Soft = `rgba(${blob1Rgb}, ${alphaSoft})`;
     const blobC2Strong = `rgba(${blob2Rgb}, ${alphaStrong})`;
@@ -485,6 +499,8 @@ function applyTheme(theme) {
     } else {
         document.documentElement.setAttribute('data-theme', theme);
     }
+    // 主题切换后 blob alpha 值变化，清除缓存以重新读取
+    _blobAlphaCache = null;
     // 主题切换后图标背景基色 RGB 变化，需重新应用
     applyIconBgOpacity(SettingsManager.get('iconBgOpacity'));
     // 文本默认色随主题变化，需重新解析（单独/全局覆盖的优先级在函数内保留）
@@ -590,8 +606,18 @@ function initTime() {
     });
 }
 
+// 缓存时钟/日期 DOM 引用，避免每秒 getElementById
+let _timeEl = null;
+let _dateEl = null;
+// 日期字符串缓存：日期每天只变一次，避免每秒重复创建 Intl 格式化器
+let _lastDateKey = '';
+let _cachedDateStr = '';
+
 function updateTime() {
     const now = new Date();
+    if (!_timeEl) _timeEl = document.getElementById('time');
+    if (!_dateEl) _dateEl = document.getElementById('date');
+
     const format = SettingsManager.get('timeFormat') || 24;
     const showSeconds = SettingsManager.get('showSeconds') || false;
 
@@ -610,25 +636,25 @@ function updateTime() {
     if (showSeconds) timeStr += `:${seconds}`;
     timeStr += suffix;
 
-    document.getElementById('time').textContent = timeStr;
+    _timeEl.textContent = timeStr;
 
-    // 日期格式
+    // 日期每天只变一次，将其纳入缓存 key（含 showWeek/showLunar 设置项），
+    // 避免每秒重复调用 toLocaleDateString / getLunarDate（创建 Intl 格式化器开销大）
     const showWeek = SettingsManager.get('showWeek') !== false;
     const showLunar = SettingsManager.get('showLunar') || false;
-    let dateStr = '';
-
-    if (showWeek) {
-        dateStr = now.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    } else {
-        dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${showWeek}-${showLunar}`;
+    if (dateKey !== _lastDateKey) {
+        _lastDateKey = dateKey;
+        let dateStr = showWeek
+            ? now.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+            : now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+        if (showLunar) {
+            const lunar = getLunarDate(now);
+            if (lunar) dateStr += ` · ${lunar}`;
+        }
+        _cachedDateStr = dateStr;
     }
-
-    if (showLunar) {
-        const lunar = getLunarDate(now);
-        if (lunar) dateStr += ` · ${lunar}`;
-    }
-
-    document.getElementById('date').textContent = dateStr;
+    _dateEl.textContent = _cachedDateStr;
 }
 
 /* 农历日期（标准写法）：使用 Intl 中文农历日历提取结构化数据后查表转中文，
@@ -640,14 +666,17 @@ const LUNAR_DAY_NAMES = ['初一', '初二', '初三', '初四', '初五', '初�
     '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
     '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
 
+// 缓存农历格式化器，避免每次调用都 new Intl.DateTimeFormat（构造开销大）
+let _lunarFmt = null;
 function getLunarDate(date) {
     try {
-        // 用 formatToParts 拿到结构化的农历月/日数值，不依赖 format 的字符串拼接
-        const fmt = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
-            month: 'numeric',
-            day: 'numeric'
-        });
-        const parts = fmt.formatToParts(date);
+        if (!_lunarFmt) {
+            _lunarFmt = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
+                month: 'numeric',
+                day: 'numeric'
+            });
+        }
+        const parts = _lunarFmt.formatToParts(date);
         let monthNum = 0, dayNum = 0, isLeap = false;
         for (const p of parts) {
             if (p.type === 'month') {

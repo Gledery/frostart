@@ -232,7 +232,6 @@ body.hide-shortcut-names .shortcut-item {
         transform var(--time-fast) ease,
         box-shadow var(--time-normal) var(--easing-standard),
         background-color var(--time-normal) var(--easing-standard);
-    will-change: transform;
 }
 
 .shortcut-item:hover .shortcut-icon {

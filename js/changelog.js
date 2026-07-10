@@ -6,6 +6,16 @@
 
 var versions = [
     {
+        version: '1.0.4', date: '2026-7-10',
+        changes: [
+            '优化了时钟性能：缓存 DOM 引用和日期字符串以避免每秒重复调用 toLocaleDateString 和创建 Intl 格式化器',
+            '缓存了农历日期的 Intl.DateTimeFormat 实例',
+            '优化了壁纸渲染：缓存 blob alpha 值，避免拖动滑块时 getComputedStyle 每次触发强制回流',
+            '优化了 escapeHtml：用字符串替换替代每次创建 DOM 元素',
+            '移除了图标元素的永久 will-change，减少不必要的 GPU 图层开销',
+        ]
+    },
+    {
         version: '1.0.3', date: '2026-7-7',
         changes: [
             '修复了扩展里点开 README / 隐私声明中文会乱码的问题',

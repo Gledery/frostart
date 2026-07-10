@@ -552,9 +552,10 @@ function initDragSort() {
    工具函数
    ========================================= */
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = String(text);
-    return div.innerHTML;
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 function compressImage(file, maxSize, quality, callback) {
