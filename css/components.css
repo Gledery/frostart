@@ -533,9 +533,11 @@ body.hide-shortcut-names .shortcut-item {
     font-weight: 500;
     color: var(--text-secondary);
     white-space: nowrap;
+    cursor: pointer;
     transition:
         color var(--time-fast) var(--easing-standard),
-        background-color var(--time-fast) var(--easing-standard);
+        background-color var(--time-fast) var(--easing-standard),
+        transform var(--time-fast) var(--easing-standard);
 }
 
 .tab-btn:hover {
@@ -543,9 +545,22 @@ body.hide-shortcut-names .shortcut-item {
     background-color: var(--bg-hover);
 }
 
+.tab-btn:active {
+    transform: scale(0.85);
+}
+
 .tab-btn.active {
     color: #fff;
     background-color: var(--accent-color);
+}
+
+.tab-btn.active:hover {
+    color: #fff;
+    background-color: color-mix(in srgb, var(--accent-color) 88%, white);
+}
+
+.tab-btn.active:active {
+    transform: scale(0.85);
 }
 
 /* =========================================
@@ -611,12 +626,21 @@ body.hide-shortcut-names .shortcut-item {
     width: 48px;
     height: 28px;
     flex-shrink: 0;
+    cursor: pointer;
+}
+
+/* 扩展点击区域到 40×40（高度不足 40px 时用伪元素补足） */
+.switch::after {
+    content: '';
+    position: absolute;
+    inset: -6px -2px;
 }
 
 .switch input {
     opacity: 0;
     width: 0;
     height: 0;
+    position: absolute;
 }
 
 .switch-slider {
@@ -625,7 +649,10 @@ body.hide-shortcut-names .shortcut-item {
     background-color: var(--bg-active);
     border-radius: var(--radius-pill);
     cursor: pointer;
-    transition: background-color var(--time-normal) var(--easing-standard);
+    transition: background-color var(--time-normal) var(--easing-standard),
+                transform var(--time-fast) var(--easing-standard),
+                box-shadow var(--time-fast) var(--easing-standard);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
 .switch-slider::before {
@@ -647,6 +674,23 @@ body.hide-shortcut-names .shortcut-item {
 
 .switch input:checked + .switch-slider::before {
     transform: translateX(20px);
+}
+
+/* 柔和浮起：悬停时整体轻微放大 + 浮起投影 */
+.switch:hover .switch-slider {
+    transform: scale(1.05);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+
+/* 按下(:active)：回缩 + 内凹加深，优先级高于悬停 */
+.switch:active .switch-slider {
+    transform: scale(0.9);
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.15);
+}
+
+/* 键盘聚焦：可见焦点环 */
+.switch input:focus-visible + .switch-slider {
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.15), 0 0 0 3px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
 
 /* 带文字标签的开关（如“跟随渐变”） */
@@ -790,7 +834,6 @@ body.hide-shortcut-names .shortcut-item {
 }
 
 .font-preset-btn:hover {
-    transform: translateY(-3px);
     background-color: var(--bg-hover);
     color: var(--text-primary);
     box-shadow: var(--shadow-md);
@@ -935,7 +978,6 @@ body.hide-shortcut-names .shortcut-item {
 }
 
 .engine-chip:hover {
-    transform: translateY(-2px);
     background-color: var(--bg-hover);
     color: var(--text-primary);
     opacity: 1;
@@ -1067,7 +1109,6 @@ body.hide-shortcut-names .shortcut-item {
 }
 
 .option-btn:hover {
-    transform: translateY(-3px);
     background-color: var(--bg-hover);
     box-shadow: var(--shadow-md);
 }
@@ -1224,7 +1265,6 @@ body.hide-shortcut-names .shortcut-item {
 }
 
 .upload-btn:hover {
-    transform: translateY(-3px);
     background-color: var(--bg-hover);
     color: var(--text-primary);
     box-shadow: var(--shadow-md);
@@ -1526,7 +1566,6 @@ body.hide-shortcut-names .shortcut-item {
 }
 
 .add-shortcut-btn:hover {
-    transform: translateY(-3px);
     background-color: var(--bg-hover);
     color: var(--text-primary);
     box-shadow: var(--shadow-md);
@@ -1742,7 +1781,6 @@ body.hide-shortcut-names .shortcut-item {
 }
 
 .about-link-btn:hover {
-    transform: translateY(-1px);
     color: var(--accent-color);
     box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-color) 20%, transparent);
 }
@@ -1795,7 +1833,6 @@ button.about-link-btn {
 }
 
 .data-btn:hover {
-    transform: translateY(-3px);
     background-color: var(--bg-hover);
     color: var(--text-primary);
     box-shadow: var(--shadow-md);
@@ -2122,14 +2159,13 @@ button.about-link-btn {
 }
 
 .pack-download-btn:hover {
-    transform: translateY(-2px);
     background: color-mix(in srgb, var(--accent-color) 86%, #000);
     color: #fff;
     box-shadow: 0 8px 22px color-mix(in srgb, var(--accent-color) 45%, transparent);
 }
 
 .pack-download-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.85);
 }
 
 .pack-download-btn:disabled {
@@ -2474,7 +2510,6 @@ button.about-link-btn {
 }
 
 .cancel-btn:hover {
-    transform: translateY(-2px);
     background-color: var(--bg-hover);
     color: var(--text-primary);
 }
@@ -2489,7 +2524,6 @@ button.about-link-btn {
 }
 
 .confirm-btn:hover {
-    transform: translateY(-2px);
     background-color: color-mix(in srgb, var(--accent-color) 86%, #000);
 }
 

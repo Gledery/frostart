@@ -6,6 +6,14 @@
 
 var versions = [
     {
+        version: '1.0.5', date: '2026-7-11',
+        changes: [
+            '与 PhasWer 同步更新了新版的 pw-switch 并扩展了点击区域',
+            '统一了所有小按钮的 active 交互反馈：按下回缩改为 scale(0.85)，hover 不再使用 translateY',
+            '标签页导航 tab-btn 添加了 hover 浮起和 active 回缩动画',
+        ]
+    },
+    {
         version: '1.0.4', date: '2026-7-10',
         changes: [
             '优化了时钟性能：缓存 DOM 引用和日期字符串以避免每秒重复调用 toLocaleDateString 和创建 Intl 格式化器',
