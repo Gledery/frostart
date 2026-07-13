@@ -200,10 +200,6 @@ async function deflateRaw(uint8) {
     }
 }
 
-function encodeUtf8(str) {
-    return new TextEncoder().encode(str);
-}
-
 /* 由 [{name, data}] 构建完整 ZIP 字节 */
 async function buildZip(entries) {
     const now = dosDateTime(new Date());

@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    core.js  —  应用骨架与全局状态
    职责：全局状态变量 / 常量 / 应用初始化 / 设置应用 /
          壁纸应用 / 字体 / 文本色 / 主题 / 时钟 / 搜索 /
@@ -161,315 +161,6 @@ function applySettings() {
 }
 
 /* =========================================
-   壁纸渲染
-   ========================================= */
-// blob alpha 值缓存：仅在主题切换时变化，避免 applyWallpaper 每次都触发 getComputedStyle 强制回流
-let _blobAlphaCache = null;
-function getBlobAlphas() {
-    if (_blobAlphaCache) return _blobAlphaCache;
-    const cs = getComputedStyle(document.documentElement);
-    _blobAlphaCache = {
-        strong: parseFloat(cs.getPropertyValue('--blob-alpha-strong')) || 0.5,
-        soft: parseFloat(cs.getPropertyValue('--blob-alpha-soft')) || 0.38,
-    };
-    return _blobAlphaCache;
-}
-
-function applyWallpaper(settings) {
-    document.body.dataset.wallpaper = settings.wallpaperMode;
-
-    const imageLayer = document.querySelector('.wallpaper-image');
-
-    // 图片层：仅在 image/bing 模式下设置背景图。
-    // 切到 gradient/solid 时不清空背景图——靠 opacity:0 隐藏即可，
-    // 这样从图片模式切回时图片能随 opacity 平滑淡出，而不是被瞬切清空。
-    // 仅当处于 image/bing 模式却没有对应图片（无效态/用户点清除）时才显式清空。
-    if (imageLayer) {
-        if (settings.wallpaperMode === 'image' && settings.wallpaperImage) {
-            imageLayer.style.backgroundImage = `url("${settings.wallpaperImage}")`;
-        } else if (settings.wallpaperMode === 'bing' && settings.bingWallpaperUrl) {
-            imageLayer.style.backgroundImage = `url("${settings.bingWallpaperUrl}")`;
-        } else if (settings.wallpaperMode === 'image' || settings.wallpaperMode === 'bing') {
-            imageLayer.style.backgroundImage = '';
-        }
-    }
-
-    // 纯色壁纸（写入类型化变量 --wp-solid，便于平滑过渡）
-    document.documentElement.style.setProperty('--wp-solid', settings.wallpaperColor);
-
-    // 自定义渐变（写入类型化颜色/角度分量，由 CSS 组装为 linear-gradient，使颜色/角度变化可平滑过渡）
-    const c1 = settings.gradientColor1 || '#e8eef7';
-    const c2 = settings.gradientColor2 || '#dde6f5';
-    const angle = settings.gradientAngle || 135;
-    const root = document.documentElement;
-    root.style.setProperty('--wp-c1', c1);
-    root.style.setProperty('--wp-c2', c2);
-    root.style.setProperty('--wp-angle', `${angle}deg`);
-
-    // 光斑颜色：用户自定义优先；否则跟随壁纸派生（提取背景色相，提升饱和度，
-    // 让光斑在低饱和背景下依然可见，对齐 PhasWer 风格）。
-    // 输出完整的 rgba 字符串（而非 RGB 三元组），避免 rgba() 内嵌套含逗号的 CSS 变量导致解析不一致。
-    const solid = settings.wallpaperColor || c1;
-    const customBlob1 = settings.blobColor1;
-    const customBlob2 = settings.blobColor2;
-    const blob1Rgb = customBlob1 ? hexToRgbTriplet(customBlob1)
-        : (settings.wallpaperMode === 'solid' ? hexToBlobRgb(solid, 0) : hexToBlobRgb(c1, 0));
-    const blob2Rgb = customBlob2 ? hexToRgbTriplet(customBlob2)
-        : (settings.wallpaperMode === 'solid' ? hexToBlobRgb(solid, 40) : hexToBlobRgb(c2, 0));
-    // 缓存 blob alpha 值，避免每次 applyWallpaper 都 getComputedStyle 触发强制回流。
-    // alpha 值仅在主题切换时变化，由 applyTheme() 清除缓存。
-    const alphas = getBlobAlphas();
-    const alphaStrong = alphas.strong;
-    const alphaSoft = alphas.soft;
-    const blobC1Strong = `rgba(${blob1Rgb}, ${alphaStrong})`;
-    const blobC1Soft = `rgba(${blob1Rgb}, ${alphaSoft})`;
-    const blobC2Strong = `rgba(${blob2Rgb}, ${alphaStrong})`;
-    const blobC2Soft = `rgba(${blob2Rgb}, ${alphaSoft})`;
-    root.style.setProperty('--blob-c1-strong', blobC1Strong);
-    root.style.setProperty('--blob-c1-soft', blobC1Soft);
-    root.style.setProperty('--blob-c2-strong', blobC2Strong);
-    root.style.setProperty('--blob-c2-soft', blobC2Soft);
-
-    // 图片壁纸遮罩透明度
-    const maskOpacity = settings.wallpaperMask / 100;
-    document.documentElement.style.setProperty('--wallpaper-mask-opacity', maskOpacity);
-
-    // 图片壁纸模糊度
-    const imageBlur = settings.wallpaperBlur || 0;
-    document.documentElement.style.setProperty('--wallpaper-image-blur', `${imageBlur}px`);
-
-    // 写入首屏壁纸缓存，供 newtab.html 内联脚本在主 JS 加载前同步应用，消除首屏闪烁
-    writeWallpaperCache({
-        mode: settings.wallpaperMode,
-        wpSolid: settings.wallpaperColor || '',
-        wpC1: c1,
-        wpC2: c2,
-        wpAngle: `${angle}deg`,
-        blobC1Strong, blobC1Soft, blobC2Strong, blobC2Soft,
-        maskOpacity,
-        imageBlur,
-        image: (settings.wallpaperMode === 'image' && settings.wallpaperImage)
-            ? settings.wallpaperImage
-            : (settings.wallpaperMode === 'bing' && settings.bingWallpaperUrl ? settings.bingWallpaperUrl : '')
-    });
-}
-
-/* 首屏壁纸缓存：把 applyWallpaper 已计算的全部 CSS 变量序列化到 localStorage，
-   供 newtab.html 顶部内联脚本在主 JS 加载前同步读取并应用，避免首屏从默认壁纸闪到自定义壁纸。
-   图片数据可能很大，若触发配额错误则去掉 image 字段重试。 */
-function writeWallpaperCache(cache) {
-    const KEY = 'frostartWpCache';
-    const dump = (obj) => localStorage.setItem(KEY, JSON.stringify(obj));
-    try {
-        dump(cache);
-    } catch (e) {
-        try {
-            dump({ ...cache, image: '' });
-        } catch (e2) { /* 放弃缓存，首屏回退到默认值 */ }
-    }
-}
-
-/* =========================================
-   必应每日壁纸
-   直连 Bing 官方接口（HPImageArchive），需在 manifest 中声明 host_permissions。
-   按天缓存：当天已拉取则复用 URL，跨天或手动刷新时重新请求。
-   拉取失败保留上一次缓存，保证离线/异常下仍有壁纸。
-   ========================================= */
-const BING_WALLPAPER_API = 'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN';
-
-function getTodayDateStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-async function refreshBingWallpaper(force) {
-    const today = getTodayDateStr();
-    const current = SettingsManager.getAll();
-    // 当天且已有缓存：无需请求
-    if (!force && current.bingWallpaperDate === today && current.bingWallpaperUrl) return;
-
-    try {
-        const res = await fetch(BING_WALLPAPER_API, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Bing API HTTP ' + res.status);
-        const data = await res.json();
-        const img = data && data.images && data.images[0];
-        if (!img || !img.url) throw new Error('Bing API 未返回图片');
-        const url = 'https://www.bing.com' + img.url;
-
-        SettingsManager.set('bingWallpaperUrl', url);
-        SettingsManager.set('bingWallpaperDate', today);
-        SettingsManager.set('bingWallpaperTitle', img.title || '');
-        SettingsManager.set('bingWallpaperCopyright', img.copyright || '');
-
-        // 仅在当前仍为必应模式时实时应用，避免覆盖用户已切换到的其它模式
-        if (SettingsManager.get('wallpaperMode') === 'bing') {
-            applyWallpaper(SettingsManager.getAll());
-        }
-        if (typeof updateBingWallpaperInfo === 'function') updateBingWallpaperInfo();
-        if (force) showToast('必应壁纸已更新~');
-    } catch (e) {
-        if (!current.bingWallpaperUrl) {
-            showToast('必应壁纸加载失败，请检查网络', 'error');
-        } else if (force) {
-            showToast('刷新失败，仍显示上次的壁纸', 'error');
-        }
-    }
-}
-
-/* 光斑专用派生：从背景色提取色相，统一提升到中等饱和度/中高明度，
-   保证低饱和（接近灰/白）的背景也能浮现与背景同色系的可见光斑（对齐 PhasWer 风格）。
-   hueShift 为色相偏移度数，用于让第二个光斑（c2）与第一个拉开差异。 */
-function hexToBlobRgb(hex, hueShift = 0) {
-    const { h, s, l } = hexToHsl(hex);
-
-    // 低饱和度/高亮度的背景（灰白）→ 用一个有辨识度的默认蓝紫色调
-    // 中高饱和背景 → 保留其色相并提升饱和度
-    let outH = (h + hueShift + 360) % 360;
-    let outS, outL;
-
-    if (s < 8 || l > 92) {
-        // 几乎是纯灰/纯白：用 PhasWer 默认蓝紫光斑色相
-        outH = (hueShift === 0 ? 215 : 265);
-        outS = 70;
-        outL = 62;
-    } else {
-        // 提升饱和度与明度，让光斑透出来
-        outS = Math.min(85, Math.max(45, s + 30));
-        outL = Math.min(66, Math.max(50, l + 10));
-    }
-
-    return hslToRgbTriplet(outH, outS, outL);
-}
-
-/* 把 #hex 颜色直接转为 "R,G,B" 三元组字符串，供 rgba(var(--blob-c1), alpha) 使用。
-   用于用户自定义光斑色场景：直接使用用户选定的颜色，不做派生。 */
-function hexToRgbTriplet(hex) {
-    let h = (hex || '').replace('#', '').trim();
-    if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    const num = parseInt(h, 16);
-    if (isNaN(num) || h.length !== 6) return '91, 110, 225';
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-    return `${r}, ${g}, ${b}`;
-}
-
-function hexToHsl(hex) {
-    let h = (hex || '').replace('#', '').trim();
-    if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    const num = parseInt(h, 16);
-    if (isNaN(num) || h.length !== 6) return { h: 215, s: 70, l: 62 };
-    let r = ((num >> 16) & 255) / 255;
-    let g = ((num >> 8) & 255) / 255;
-    let b = (num & 255) / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let hue = 0, sat = 0;
-    const light = (max + min) / 2;
-    const d = max - min;
-    if (d !== 0) {
-        sat = light > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r: hue = ((g - b) / d + (g < b ? 6 : 0)); break;
-            case g: hue = ((b - r) / d + 2); break;
-            case b: hue = ((r - g) / d + 4); break;
-        }
-        hue *= 60;
-    }
-    return { h: hue, s: sat * 100, l: light * 100 };
-}
-
-function hslToRgbTriplet(h, s, l) {
-    s /= 100; l /= 100;
-    const k = n => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    const r = Math.round(f(0) * 255);
-    const g = Math.round(f(8) * 255);
-    const b = Math.round(f(4) * 255);
-    return `${r}, ${g}, ${b}`;
-}
-
-/* =========================================
-   字体加载（真正生效）
-   ========================================= */
-function applyFont(fontName) {
-    const root = document.documentElement;
-    if (!fontName || !fontName.trim()) {
-        root.style.removeProperty('--custom-font');
-        removeFontLink();
-        return;
-    }
-
-    root.style.setProperty('--custom-font', fontName);
-
-    // 尝试从 Google Fonts 加载（仅当字体名不是系统字体时）
-    const systemFonts = ['HarmonyOS Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC',
-        'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Inter', 'Arial', 'sans-serif',
-        'Helvetica', 'Helvetica Neue'];
-    const isSystem = systemFonts.some(sf => fontName.toLowerCase().includes(sf.toLowerCase()));
-
-    if (!isSystem) {
-        loadGoogleFont(fontName);
-    } else {
-        removeFontLink();
-    }
-}
-
-function loadGoogleFont(fontName) {
-    removeFontLink();
-    const family = fontName.split(',')[0].trim().replace(/\s+/g, '+');
-    const link = document.createElement('link');
-    link.id = 'custom-font-link';
-    link.rel = 'stylesheet';
-    link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@300;400;500;600;700&display=swap`;
-    document.head.appendChild(link);
-}
-
-function removeFontLink() {
-    const existing = document.getElementById('custom-font-link');
-    if (existing) existing.remove();
-}
-
-/* =========================================
-   自定义文本颜色（细化控制）
-   ========================================= */
-function applyTextColors(settings) {
-    const root = document.documentElement;
-    const theme = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-
-    // 各主题下"未自定义"时的默认色
-    // 时钟/日期/快捷名称默认白色（浮于壁纸/毛玻璃上更清晰）；
-    // 搜索文字/占位符/设置图标保持各自主题的深浅色（搜索框内是浅色玻璃背景）。
-    const WHITE = '#ffffff';
-    const defaults = theme === 'dark'
-        ? { clock: WHITE, date: 'rgba(255,255,255,0.78)', shortcutName: 'rgba(255,255,255,0.78)', searchText: '#f0f0f8', searchPlaceholder: '#888898', settingsIcon: '#f0f0f8' }
-        : { clock: WHITE, date: 'rgba(255,255,255,0.82)', shortcutName: 'rgba(255,255,255,0.82)', searchText: '#1a1a2a', searchPlaceholder: '#6a6a7a', settingsIcon: '#1a1a2a' };
-
-    // 解析顺序：单独覆盖 > 全局文本色 > 主题默认色
-    const global = settings.globalTextColor || '';
-    const resolve = (specific, def) => specific || global || def;
-
-    const map = [
-        { key: 'clockColor', cssVar: '--clock-color', value: resolve(settings.clockColor, defaults.clock) },
-        { key: 'dateColor', cssVar: '--date-color', value: resolve(settings.dateColor, defaults.date) },
-        { key: 'shortcutNameColor', cssVar: '--shortcut-name-color', value: resolve(settings.shortcutNameColor, defaults.shortcutName) },
-        { key: 'searchTextColor', cssVar: '--search-text-color', value: resolve(settings.searchTextColor, defaults.searchText) },
-        { key: 'searchPlaceholderColor', cssVar: '--search-placeholder-color', value: resolve(settings.searchPlaceholderColor, defaults.searchPlaceholder) },
-        { key: 'settingsIconColor', cssVar: '--settings-icon-color', value: resolve('', defaults.settingsIcon) }
-    ];
-    map.forEach(({ cssVar, value }) => {
-        root.style.setProperty(cssVar, value);
-    });
-
-    // 保留 --global-text-color 给可能的外部引用，但不再依赖它做级联解析
-    if (global) {
-        root.style.setProperty('--global-text-color', global);
-    } else {
-        root.style.removeProperty('--global-text-color');
-    }
-}
-
-/* =========================================
    主题
    ========================================= */
 /* 绑定主题按钮事件（只应在初始化时调一次，避免重复绑定） */
@@ -490,21 +181,6 @@ function syncThemeUI() {
     document.querySelectorAll('[data-theme-option]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.themeOption === theme);
     });
-}
-
-function applyTheme(theme) {
-    if (theme === 'auto') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-    } else {
-        document.documentElement.setAttribute('data-theme', theme);
-    }
-    // 主题切换后 blob alpha 值变化，清除缓存以重新读取
-    _blobAlphaCache = null;
-    // 主题切换后图标背景基色 RGB 变化，需重新应用
-    applyIconBgOpacity(SettingsManager.get('iconBgOpacity'));
-    // 文本默认色随主题变化，需重新解析（单独/全局覆盖的优先级在函数内保留）
-    applyTextColors(SettingsManager.getAll());
 }
 
 /* 自定义主题色：非空时覆盖 --accent-color，空值则移除覆盖回归主题默认 */
@@ -604,101 +280,6 @@ function initTime() {
             timer = setInterval(updateTime, 1000);
         }
     });
-}
-
-// 缓存时钟/日期 DOM 引用，避免每秒 getElementById
-let _timeEl = null;
-let _dateEl = null;
-// 日期字符串缓存：日期每天只变一次，避免每秒重复创建 Intl 格式化器
-let _lastDateKey = '';
-let _cachedDateStr = '';
-
-function updateTime() {
-    const now = new Date();
-    if (!_timeEl) _timeEl = document.getElementById('time');
-    if (!_dateEl) _dateEl = document.getElementById('date');
-
-    const format = SettingsManager.get('timeFormat') || 24;
-    const showSeconds = SettingsManager.get('showSeconds') || false;
-
-    let hours = now.getHours();
-    let minutes = String(now.getMinutes()).padStart(2, '0');
-    let seconds = String(now.getSeconds()).padStart(2, '0');
-    let suffix = '';
-
-    if (format === 12) {
-        suffix = hours >= 12 ? ' PM' : ' AM';
-        hours = hours % 12 || 12;
-    }
-
-    const hh = String(hours).padStart(2, '0');
-    let timeStr = `${hh}:${minutes}`;
-    if (showSeconds) timeStr += `:${seconds}`;
-    timeStr += suffix;
-
-    _timeEl.textContent = timeStr;
-
-    // 日期每天只变一次，将其纳入缓存 key（含 showWeek/showLunar 设置项），
-    // 避免每秒重复调用 toLocaleDateString / getLunarDate（创建 Intl 格式化器开销大）
-    const showWeek = SettingsManager.get('showWeek') !== false;
-    const showLunar = SettingsManager.get('showLunar') || false;
-    const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${showWeek}-${showLunar}`;
-    if (dateKey !== _lastDateKey) {
-        _lastDateKey = dateKey;
-        let dateStr = showWeek
-            ? now.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-            : now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
-        if (showLunar) {
-            const lunar = getLunarDate(now);
-            if (lunar) dateStr += ` · ${lunar}`;
-        }
-        _cachedDateStr = dateStr;
-    }
-    _dateEl.textContent = _cachedDateStr;
-}
-
-/* 农历日期（标准写法）：使用 Intl 中文农历日历提取结构化数据后查表转中文，
-   规避各浏览器 Intl 输出格式不一致的问题。
-   输出形如：正月初一 / 五月十五 / 闰六月初八 */
-const LUNAR_MONTH_NAMES = ['正月', '二月', '三月', '四月', '五月', '六月',
-    '七月', '八月', '九月', '十月', '十一月', '腊月'];
-const LUNAR_DAY_NAMES = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
-    '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
-    '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
-
-// 缓存农历格式化器，避免每次调用都 new Intl.DateTimeFormat（构造开销大）
-let _lunarFmt = null;
-function getLunarDate(date) {
-    try {
-        if (!_lunarFmt) {
-            _lunarFmt = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
-                month: 'numeric',
-                day: 'numeric'
-            });
-        }
-        const parts = _lunarFmt.formatToParts(date);
-        let monthNum = 0, dayNum = 0, isLeap = false;
-        for (const p of parts) {
-            if (p.type === 'month') {
-                // 闰月在 Intl 里通常表现为带前缀（如 "6" 或 "leap6"），清洗取数值
-                const raw = p.value;
-                const m = raw.match(/(\d+)/);
-                if (m) monthNum = parseInt(m[1], 10);
-                isLeap = /闰|leap/i.test(raw);
-            } else if (p.type === 'day') {
-                const m = p.value.match(/(\d+)/);
-                if (m) dayNum = parseInt(m[1], 10);
-            }
-        }
-        if (!monthNum || !dayNum) return null;
-
-        const monthName = LUNAR_MONTH_NAMES[monthNum - 1] || `${monthNum}月`;
-        const dayName = LUNAR_DAY_NAMES[dayNum - 1] || `${dayNum}日`;
-        // 闰月标准写法：前缀"闰"，如"闰六月初八"
-        return (isLeap ? '闰' : '') + monthName + dayName;
-    } catch (e) {
-        return null;
-    }
 }
 
 /* =========================================
@@ -1102,16 +683,6 @@ function initSettingsDrawer() {
     });
 }
 
-function openDrawer() {
-    document.getElementById('settings-drawer').classList.add('open');
-    document.getElementById('drawer-overlay').classList.add('open');
-}
-
-function closeDrawer() {
-    document.getElementById('settings-drawer').classList.remove('open');
-    document.getElementById('drawer-overlay').classList.remove('open');
-}
-
 /* =========================================
    模态框（快捷方式编辑）
    ========================================= */
@@ -1441,7 +1012,7 @@ function initDataManagement() {
                 const text = await res.text();
                 const win = window.open('', '_blank');
                 if (!win) return; // 弹窗被拦截，保持已阻止的默认行为
-                const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const esc = escapeHtml;
                 win.document.open();
                 win.document.write(
                     '<!DOCTYPE html><html><head><meta charset="utf-8">' +
@@ -1462,30 +1033,6 @@ function initDataManagement() {
         });
     });
 }
-
-/* =========================================
-   Toast 通知
-   ========================================= */
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        // 双层 rAF：确保浏览器先渲染初始状态（opacity:0），再触发 transition
-        requestAnimationFrame(() => toast.classList.add('show'));
-    });
-
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 2500);
-}
-
 /* =========================================
    更新检查
    直接读 GitHub 上 manifest.json 的 version 字段做对比。
@@ -1496,18 +1043,6 @@ const UPDATE_BRANCH = 'main';
 const UPDATE_API = `https://raw.githubusercontent.com/${UPDATE_REPO}/${UPDATE_BRANCH}/manifest.json`;
 const UPDATE_RELEASES_URL = `https://github.com/${UPDATE_REPO}/archive/refs/heads/${UPDATE_BRANCH}.zip`;
 const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 小时节流
-
-/* 语义化版本比较：返回 1(a>b) / -1(a<b) / 0(相等) */
-function compareVersions(a, b) {
-    const pa = String(a).split('.').map(n => parseInt(n, 10) || 0);
-    const pb = String(b).split('.').map(n => parseInt(n, 10) || 0);
-    const len = Math.max(pa.length, pb.length);
-    for (let i = 0; i < len; i++) {
-        if ((pa[i] || 0) > (pb[i] || 0)) return 1;
-        if ((pa[i] || 0) < (pb[i] || 0)) return -1;
-    }
-    return 0;
-}
 
 function initUpdateCheck() {
     const checkBtn = document.getElementById('check-update-btn');

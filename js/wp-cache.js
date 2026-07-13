@@ -7,13 +7,13 @@
    ========================================= */
 (function () {
     try {
-        var raw = localStorage.getItem('frostartWpCache');
+        const raw = localStorage.getItem('frostartWpCache');
         if (!raw) return;
-        var c = JSON.parse(raw);
+        const c = JSON.parse(raw);
         if (!c || typeof c !== 'object') return;
-        var root = document.documentElement;
+        const root = document.documentElement;
         if (c.mode) document.body.setAttribute('data-wallpaper', c.mode);
-        var setVar = function (k, v) { if (v) root.style.setProperty(k, v); };
+        const setVar = function (k, v) { if (v) root.style.setProperty(k, v); };
         setVar('--wp-solid', c.wpSolid);
         setVar('--wp-c1', c.wpC1);
         setVar('--wp-c2', c.wpC2);
@@ -25,11 +25,11 @@
         if (typeof c.maskOpacity === 'number') root.style.setProperty('--wallpaper-mask-opacity', c.maskOpacity);
         if (typeof c.imageBlur === 'number') root.style.setProperty('--wallpaper-image-blur', c.imageBlur + 'px');
         if (c.mode === 'image' && c.image) {
-            var img = document.querySelector('.wallpaper-image');
+            const img = document.querySelector('.wallpaper-image');
             if (img) img.style.backgroundImage = 'url("' + c.image + '")';
         }
         if (c.mode === 'bing' && c.image) {
-            var bingImg = document.querySelector('.wallpaper-image');
+            const bingImg = document.querySelector('.wallpaper-image');
             if (bingImg) bingImg.style.backgroundImage = 'url("' + c.image + '")';
         }
     } catch (e) { /* 放弃缓存，回退到默认值 */ }

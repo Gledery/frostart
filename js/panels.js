@@ -12,14 +12,6 @@ function setWallpaperTransition(enabled) {
     document.body.classList.toggle('wp-instant', !enabled);
 }
 
-/* 把 core.js 产生的 "R,G,B" 三元组字符串转回 #hex，供回写颜色选择器指示框。
-   依赖 hexToBlobRgb / hexToRgbTriplet（定义在 core.js）。 */
-function rgbTripletToHex(triplet) {
-    const parts = String(triplet).split(',').map(p => parseInt(p.trim(), 10));
-    if (parts.length !== 3 || parts.some(isNaN)) return '#5b6ee1';
-    return '#' + parts.map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0')).join('');
-}
-
 /* 计算当前实际生效的光斑颜色（#hex）：自定义色优先，否则按壁纸模式从背景派生。
    which = 1 或 2。派生逻辑与 core.js applyWallpaper 保持一致。 */
 function getEffectiveBlobHex(which) {
@@ -512,27 +504,12 @@ function applyClockFont(fontName) {
     const root = document.documentElement;
     if (!fontName || !fontName.trim()) {
         root.style.removeProperty('--clock-font');
-        removeClockFontLink();
+        removeFontLink('clock-font-link');
         return;
     }
 
     root.style.setProperty('--clock-font', fontName);
-    loadClockFont(fontName);
-}
-
-function loadClockFont(fontName) {
-    removeClockFontLink();
-    const family = fontName.split(',')[0].trim().replace(/\s+/g, '+');
-    const link = document.createElement('link');
-    link.id = 'clock-font-link';
-    link.rel = 'stylesheet';
-    link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@300;400;500;600;700;800&display=swap`;
-    document.head.appendChild(link);
-}
-
-function removeClockFontLink() {
-    const existing = document.getElementById('clock-font-link');
-    if (existing) existing.remove();
+    loadGoogleFont(fontName, 'clock-font-link', '300;400;500;600;700;800');
 }
 
 function preloadClockFontPreviews() {

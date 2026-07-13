@@ -7,24 +7,24 @@
    4. 幂等：重复调用 initKaomoji 不会创建多个实例
    ========================================= */
 
-var KaomojiWidget = (function () {
-    var defaultFace = '(・ω・)';
+const KaomojiWidget = (function () {
+    const defaultFace = '(・ω・)';
 
-    var facesEarly = [
+    const facesEarly = [
         '(・ω・)', '(≧▽≦)', '(ノ´▽`)ノ♪', '(￣▽￣)~*',
         '(・∀・)', '(ﾟ∀ﾟ)', '(*´▽`*)', '(*´∇`*)',
         '(≧∇≦)b', '(・ω・)ノ', '(o´ω`o)ﾉ', '(。・▽・。)'
     ];
-    var facesMid = [
+    const facesMid = [
         '(。・ω・。)', '(´・ω・`)', '(｀・ω・´)', '(〃￣︶￣)人(￣︶￣〃)',
         '(─▽─)', '(´-ω-`)', '(￣ω￣)'
     ];
-    var facesLate = [
+    const facesLate = [
         '(Ｔ▽Ｔ)', '(つд⊂)', '(。_。)', '(・_・)',
         '(　´_ゝ`)', '( ˘ω˘ )', '(－ω－)'
     ];
 
-    var messagesEarly = [
+    const messagesEarly = [
         '你在看我吗？',
         '你发现我了！',
         '你点到我了，恭喜',
@@ -45,7 +45,7 @@ var KaomojiWidget = (function () {
         '我在努力当一只合格的Kaomoji！',
         '你的鼠标好好玩，我能碰一下吗',
     ];
-    var messagesMid = [
+    const messagesMid = [
         '别点了别点了...',
         '我只是一个无辜的颜文字',
         '你是不是闲得慌',
@@ -54,7 +54,7 @@ var KaomojiWidget = (function () {
         '(´;ω;`) 头好晕...你点太快了',
         '我也有脾气的！'
     ];
-    var messagesLate = [
+    const messagesLate = [
         '再点一下试试',
         '嗯...没有了，真的没有了',
         '已经没有更多彩蛋了啊喂...？',
@@ -63,7 +63,7 @@ var KaomojiWidget = (function () {
         '我已经...什么都不想说了 (´;ω;`)',
     ];
 
-    var idleMessages = [
+    const idleMessages = [
         '......zzZ', '好无聊啊......', '有人在吗？',
         '（打了个哈欠）', '溜了溜了', '（发呆中）',
         '要不要聊聊天', '（看风景）', '芜湖~♪',
@@ -77,36 +77,36 @@ var KaomojiWidget = (function () {
         '（试图逃跑）',
         '（假装自己是一朵蘑菇）',
     ];
-    var idleFaces = [
+    const idleFaces = [
         '(－ω－) zzZ', '(´-ω-`)', '(。_。)', '(￣ω￣)',
         '(・_・)', '(　´_ゝ`)', '(´・ω・`)', '( ˘ω˘ )'
     ];
 
-    var el = null;
-    var faceEl = null;
-    var bubbleEl = null;
+    let el = null;
+    let faceEl = null;
+    let bubbleEl = null;
 
-    var clickCount = 0;
-    var lastFace = '';
-    var lastMessage = '';
-    var bubbleTimer = null;
-    var idleResetTimer = null;
-    var idleActionTimer = null;
-    var idleWiggleTimer = null;
-    var popTimeout = null;
-    var initTimer = null;
-    var isIdle = false;
-    var wasIdle = false;
-    var generation = 0;
-    var active = false;
+    let clickCount = 0;
+    let lastFace = '';
+    let lastMessage = '';
+    let bubbleTimer = null;
+    let idleResetTimer = null;
+    let idleActionTimer = null;
+    let idleWiggleTimer = null;
+    let popTimeout = null;
+    let initTimer = null;
+    let isIdle = false;
+    let wasIdle = false;
+    let generation = 0;
+    let active = false;
 
     function onNaughtyDone() {
         if (isIdle) startIdleWiggle();
     }
 
-    var naughtyActions = [
+    const naughtyActions = [
         function () {
-            var g = generation;
+            const g = generation;
             el.style.transition = 'left 0.6s ease';
             // 必须用可插值的具体数值（calc(100vw - 100px)），不能用 left:auto/right:30px：
             // 因为 transition 设在 left 上，而 left:auto 无法被插值，会导致瞬间跳变（无动画）+ 闪回
@@ -125,7 +125,7 @@ var KaomojiWidget = (function () {
             }, 3000);
         },
         function () {
-            var g = generation;
+            const g = generation;
             el.style.transition = 'bottom 0.5s ease';
             el.style.bottom = '-80px';
             showBubble('我溜了......', 1500);
@@ -147,7 +147,7 @@ var KaomojiWidget = (function () {
             }, 2000);
         },
         function () {
-            var g = generation;
+            const g = generation;
             faceEl.style.transform = 'scaleX(-1)';
             faceEl.textContent = '(・ω・)';
             showBubble('我反过来了......好玩', 3000);
@@ -158,7 +158,7 @@ var KaomojiWidget = (function () {
             }, 3000);
         },
         function () {
-            var g = generation;
+            const g = generation;
             el.style.transition = 'left 0.8s ease';
             el.style.left = '50%';
             el.style.transform = 'translateX(-50%)';
@@ -177,12 +177,12 @@ var KaomojiWidget = (function () {
             }, 3500);
         },
         function () {
-            var g = generation;
-            var spinFaces = ['(・ω・)', '(・∀・)', '(ﾟ∀ﾟ)', '(≧▽≦)', '(Ｔ▽Ｔ)'];
-            var i = 0;
+            const g = generation;
+            const spinFaces = ['(・ω・)', '(・∀・)', '(ﾟ∀ﾟ)', '(≧▽≦)', '(Ｔ▽Ｔ)'];
+            let i = 0;
             faceEl.textContent = spinFaces[0];
             showBubble('转转转......', 2000);
-            var spinTimer = setInterval(function () {
+            const spinTimer = setInterval(function () {
                 if (generation !== g) { clearInterval(spinTimer); return; }
                 i++;
                 if (i >= spinFaces.length) {
@@ -196,16 +196,16 @@ var KaomojiWidget = (function () {
         }
     ];
 
-    var wakeFace = '(ﾟ∀ﾟ)';
-    var wakeMessages = [
+    const wakeFace = '(ﾟ∀ﾟ)';
+    const wakeMessages = [
         '来啦来啦！', '啊！你回来了！', '嗯？什么事？',
         '我醒了！', '嗷！别吓我...', '你终于来了！'
     ];
 
     function pickUnique(arr, last) {
         if (arr.length <= 1) return arr[0];
-        var choice;
-        var attempts = 0;
+        let choice;
+        let attempts = 0;
         do {
             choice = arr[Math.floor(Math.random() * arr.length)];
             attempts++;
@@ -241,7 +241,7 @@ var KaomojiWidget = (function () {
 
     function startIdleWiggle() {
         stopIdleWiggle();
-        var transforms = ['rotate(-4deg)', 'rotate(4deg)', 'translateY(3px)', 'translateX(-3px)', 'translateX(3px)'];
+        const transforms = ['rotate(-4deg)', 'rotate(4deg)', 'translateY(3px)', 'translateX(-3px)', 'translateX(3px)'];
         function step() {
             if (!isIdle) return;
             faceEl.style.transform = transforms[Math.floor(Math.random() * transforms.length)];
@@ -301,7 +301,7 @@ var KaomojiWidget = (function () {
 
     function doIdleAction() {
         if (isIdle) {
-            var r = Math.random();
+            const r = Math.random();
             if (r < 0.35) {
                 lastFace = pickUnique(idleFaces, lastFace);
                 faceEl.textContent = lastFace;
@@ -339,7 +339,7 @@ var KaomojiWidget = (function () {
             wasIdle = false;
             clickCount++;
             faceEl.textContent = wakeFace;
-            var wakeMsg = pickUnique(wakeMessages, lastMessage);
+            const wakeMsg = pickUnique(wakeMessages, lastMessage);
             pop();
             showBubble(wakeMsg);
             lastMessage = wakeMsg;
@@ -351,9 +351,9 @@ var KaomojiWidget = (function () {
         isIdle = false;
         clickCount++;
 
-        var stage = clickCount < 10 ? 0 : (clickCount < 24 ? 1 : 2);
-        var facePool = getStagePool(facesEarly, facesMid, facesLate, stage);
-        var msgPool = getStagePool(messagesEarly, messagesMid, messagesLate, stage);
+        const stage = clickCount < 10 ? 0 : (clickCount < 24 ? 1 : 2);
+        const facePool = getStagePool(facesEarly, facesMid, facesLate, stage);
+        const msgPool = getStagePool(messagesEarly, messagesMid, messagesLate, stage);
 
         lastFace = pickUnique(facePool, lastFace);
         faceEl.textContent = lastFace;
