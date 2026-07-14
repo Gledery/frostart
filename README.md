@@ -147,7 +147,26 @@ Frostart/
 
 ## 贡献
 
-想反馈 bug 或者提建议，欢迎到 [GitHub Issues](https://github.com/Gledery/Frostart/issues) 提 issue，或者直接 [B 站私信](https://space.bilibili.com/3461577804089941) 找我。
+欢迎反馈 bug、提建议或直接贡献代码！
+
+### 快速上手
+
+- **报告 Bug / 提建议**：到 [Issues](https://github.com/Gledery/frostart/issues) 新建 Issue，选对应模板填写即可。
+- **贡献代码**：先 Fork 本仓库 → 从 `main` 拉新分支 → 改完后发起 PR。详细流程见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+
+### 改动分类指引
+
+| 改动类型 | 例子 | 流程 |
+|---------|------|------|
+| 小型 / 低风险 | 修 bug、抽离重复函数、改样式 | 直接提 PR |
+| 中型 / 需同步 | 新增功能、调整组件逻辑 | 先在 Issue 说明思路 |
+| 大型 / 架构级 | IIFE 隔离、循环依赖重构 | 必须先在 Issue 讨论达成共识 |
+
+> 项目目前正在**逐步模块化**，如果贡献者想参与架构改动，请务必先在 Issue 里对齐方向。
+
+### 其他
+
+- 也可以直接 [B 站私信](https://space.bilibili.com/3461577804089941) 找我。
 
 ---
 

@@ -6,6 +6,14 @@
 
 var versions = [
     {
+        version: '1.0.6 beta', date: '2026-7-14',
+        changes: [
+            '新增贡献指南（CONTRIBUTING.md）及 Issue / PR 模板以规范协作流程',
+            'README 贡献章节新增改动分类指引',
+            '关于此项目卡片新增「贡献指南」入口',
+        ]
+    },    
+    {
         version: '1.0.5', date: '2026-7-11',
         changes: [
             '与 PhasWer 同步更新了新版的 pw-switch 并扩展了点击区域',
