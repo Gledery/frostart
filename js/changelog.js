@@ -4,7 +4,17 @@
    注意：MV3 默认 CSP 禁止内联 <script>，从 changelog.html 抽成外部文件。
    ========================================= */
 
-var versions = [
+const versions = [
+    {
+        version: '1.0.6', date: '2026-7-13',
+        changes: [
+            '重构：抽取工具函数到 js/utils/ 目录（数学、字符串、版本比较、色彩转换）',
+            '重构：合并字体加载函数，消除 core.js 和 panels.js 之间的重复代码',
+            '重构：抽取公共服务层 services.js，解除模块间的循环依赖',
+            '清理：项目中所有 var 替换为 let/const',
+            '规范化：统一所有 JS 文件的头部注释格式',
+        ]
+    },
     {
         version: '1.0.6 beta', date: '2026-7-14',
         changes: [
@@ -61,7 +71,7 @@ var versions = [
             '此版本与含有新增卡片的PhasWer主站的3.10.1版本同步发布',
             '新增了更新检查功能，打开新标签页自动检查 GitHub Releases，有新版时检查更新按钮会变为发现更新（特别漂亮的按钮OwU）',
             '修复了已安装为扩展时仍显示获取项目文件以安装卡片的问题',
-            '修改了安装说明和更新说明', 
+            '修改了安装说明和更新说明',
         ]
     },
     {
@@ -179,46 +189,46 @@ var versions = [
 ];
 
 function getVersionLevel(v) {
-    var parts = v.split('.');
+    const parts = v.split('.');
     if (parts[1] === '0' && parts[2] === '0') return 'major';
     if (parts[2] === '0') return 'minor';
     return 'patch';
 }
 
-var LEVEL_COLORS = {
+const LEVEL_COLORS = {
     major: '#27ae60',
     minor: '#6dbf8b',
     patch: '#b8deca'
 };
 
 function renderSidebar() {
-    var sidebar = document.getElementById('sidebar');
+    const sidebar = document.getElementById('sidebar');
     sidebar.innerHTML = '';
     if (!versions.length) {
         sidebar.style.display = 'none';
         return;
     }
     sidebar.style.display = '';
-    var currentMajor = null;
+    let currentMajor = null;
     versions.forEach(function (v) {
-        var major = v.version.split('.')[0];
+        const major = v.version.split('.')[0];
         if (major !== currentMajor) {
             currentMajor = major;
-            var title = document.createElement('div');
+            const title = document.createElement('div');
             title.className = 'sidebar-section-title';
             title.textContent = 'v' + major + '.x';
             sidebar.appendChild(title);
         }
-        var item = document.createElement('div');
+        const item = document.createElement('div');
         item.className = 'sidebar-item';
         item.dataset.version = v.version;
-        var dot = document.createElement('span');
+        const dot = document.createElement('span');
         dot.className = 'sidebar-dot';
         dot.style.background = LEVEL_COLORS[getVersionLevel(v.version)];
         item.appendChild(dot);
         item.appendChild(document.createTextNode('v' + v.version));
         item.addEventListener('click', function () {
-            var el = document.getElementById('v-' + v.version);
+            const el = document.getElementById('v-' + v.version);
             if (el) {
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 el.classList.add('highlight');
@@ -230,41 +240,41 @@ function renderSidebar() {
 }
 
 function renderVersions() {
-    var list = document.getElementById('versionList');
+    const list = document.getElementById('versionList');
     list.innerHTML = '';
     if (!versions.length) {
-        var empty = document.createElement('div');
+        const empty = document.createElement('div');
         empty.className = 'version-empty';
         empty.textContent = '暂无版本记录';
         list.appendChild(empty);
         return;
     }
     versions.forEach(function (v) {
-        var level = getVersionLevel(v.version);
-        var card = document.createElement('div');
+        const level = getVersionLevel(v.version);
+        const card = document.createElement('div');
         card.className = 'version-card';
         card.id = 'v-' + v.version;
         card.dataset.level = level;
 
-        var header = document.createElement('div');
+        const header = document.createElement('div');
         header.className = 'version-header';
 
-        var badge = document.createElement('span');
+        const badge = document.createElement('span');
         badge.className = 'version-badge';
         badge.textContent = 'v' + v.version;
 
-        var date = document.createElement('span');
+        const date = document.createElement('span');
         date.className = 'version-date';
         date.textContent = v.date;
 
         header.appendChild(badge);
         header.appendChild(date);
 
-        var inner = document.createElement('div');
+        const inner = document.createElement('div');
         inner.className = 'version-body-inner';
 
         v.changes.forEach(function (desc) {
-            var item = document.createElement('div');
+            const item = document.createElement('div');
             item.className = 'change-item';
             item.textContent = desc;
             inner.appendChild(item);
@@ -277,20 +287,20 @@ function renderVersions() {
 }
 
 function initScrollSpy() {
-    var sidebar = document.getElementById('sidebar');
-    var items = document.querySelectorAll('.sidebar-item');
-    var cards = document.querySelectorAll('.version-card');
+    const sidebar = document.getElementById('sidebar');
+    const items = document.querySelectorAll('.sidebar-item');
+    const cards = document.querySelectorAll('.version-card');
 
     sidebar.addEventListener('wheel', function (e) {
         e.stopPropagation();
     }, { passive: true });
 
-    var observer = new IntersectionObserver(function (entries) {
+    const observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
             if (entry.isIntersecting) {
-                var ver = entry.target.id.replace('v-', '');
+                const ver = entry.target.id.replace('v-', '');
                 items.forEach(function (item) {
-                    var isActive = item.dataset.version === ver;
+                    const isActive = item.dataset.version === ver;
                     item.classList.toggle('active', isActive);
                     if (isActive) {
                         item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -312,6 +322,6 @@ if (document.getElementById('sidebar') && document.getElementById('versionList')
 
 // 入场动画触发：与 PhasWer 一致，window.load 后添加 .animate-in
 window.addEventListener('load', function () {
-    var hero = document.querySelector('.changelog-hero');
+    const hero = document.querySelector('.changelog-hero');
     if (hero) hero.classList.add('animate-in');
 });

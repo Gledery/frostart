@@ -2,7 +2,7 @@
    widgets.js  —  交互组件与工具
    职责：设置搜索 / 标签页 / 开关 / 键盘快捷键 /
          上下文菜单 / 拖拽排序 / 图标编辑器 /
-         工具函数（escapeHtml / compressImage / clamp 等）
+         图片压缩 / 图标文件读取 / 图标样式工具
    加载顺序：settings.js → core.js → sliders.js → panels.js → widgets.js
    ========================================= */
 
@@ -551,13 +551,6 @@ function initDragSort() {
 /* =========================================
    工具函数
    ========================================= */
-function escapeHtml(text) {
-    return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-}
-
 function compressImage(file, maxSize, quality, callback) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -757,15 +750,6 @@ function initIconEditor() {
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeIconEditor();
     });
-}
-
-function clamp(v, min, max) {
-    return Math.min(max, Math.max(min, v));
-}
-
-function round(v, digits) {
-    const p = Math.pow(10, digits);
-    return Math.round(v * p) / p;
 }
 
 function applyIconEditorTransform() {

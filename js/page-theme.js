@@ -5,11 +5,11 @@
          优先读 chrome.storage.local（扩展环境），降级到 localStorage（纯网页环境）。
    ========================================= */
 (function () {
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     function applyTheme(s) {
-        var theme = (s && s.theme) || 'auto';
-        var resolved = theme === 'auto' ? (prefersDark ? 'dark' : 'light') : theme;
+        const theme = (s && s.theme) || 'auto';
+        const resolved = theme === 'auto' ? (prefersDark ? 'dark' : 'light') : theme;
         document.documentElement.setAttribute('data-theme', resolved);
         if (s && s.accentColor) {
             document.documentElement.style.setProperty('--accent-color', s.accentColor);
@@ -18,7 +18,7 @@
 
     function readFromLocalStorage() {
         try {
-            var raw = localStorage.getItem('frostartSettings');
+            const raw = localStorage.getItem('frostartSettings');
             return raw ? JSON.parse(raw) : {};
         } catch (e) { return {}; }
     }
@@ -39,14 +39,14 @@
         // 简化：只切换 data-theme，accent 不变
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
             chrome.storage.local.get(['frostartSettings'], function (result) {
-                var s = result && result.frostartSettings;
+                const s = result && result.frostartSettings;
                 if (!s || (s.theme || 'auto') === 'auto') {
                     document.documentElement.setAttribute('data-theme',
                         window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 }
             });
         } else {
-            var s = readFromLocalStorage();
+            const s = readFromLocalStorage();
             if ((s.theme || 'auto') === 'auto') {
                 document.documentElement.setAttribute('data-theme',
                     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
