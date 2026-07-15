@@ -1,4 +1,4 @@
-﻿/* =========================================
+/* =========================================
    core.js  —  应用骨架与全局状态
    职责：全局状态变量 / 常量 / 应用初始化 / 设置应用 /
          壁纸应用 / 字体 / 文本色 / 主题 / 时钟 / 搜索 /
@@ -1126,6 +1126,7 @@ async function checkForUpdates(manual) {
 function updateButtonState(currentVersion, latestVersion) {
     const btn = document.getElementById('check-update-btn');
     const label = document.getElementById('check-update-label');
+    const settingsBtn = document.getElementById('settings-btn');
     if (!btn || !label) return;
 
     if (latestVersion === undefined) {
@@ -1136,9 +1137,11 @@ function updateButtonState(currentVersion, latestVersion) {
     if (latestVersion && compareVersions(latestVersion, currentVersion) > 0) {
         label.textContent = `v${latestVersion} 可更新`;
         btn.classList.add('has-update');
+        if (settingsBtn) settingsBtn.classList.add('has-update');
     } else {
         label.textContent = '检查更新';
         btn.classList.remove('has-update');
+        if (settingsBtn) settingsBtn.classList.remove('has-update');
     }
 }
 

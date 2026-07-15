@@ -6,7 +6,6 @@
     <title>更新日志 | Frostart</title>
     <link rel="icon" href="icons/Frostart2606-64px.png" type="image/png">
     <link rel="apple-touch-icon" href="icons/Frostart2606-256px.png">
-    <!-- 复用主站设计令牌 / 基础层 / 组件层：背景、玻璃、圆角、阴影、accent 全部对齐主站 -->
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
@@ -15,7 +14,6 @@
          MV3 默认 CSP 禁止内联脚本，必须用外部文件。 -->
     <script src="js/page-theme.js"></script>
     <style>
-        /* main 成为主卡片：宽度/圆角/阴影/边框 完全对齐 PhasWer */
         .changelog-main {
             width: 1300px;
             max-width: 90%;
@@ -34,7 +32,6 @@
             animation: enter-fade-up var(--time-slow) var(--easing-enter) forwards;
         }
 
-        /* hero 区域：完全对齐 PhasWer .page-hero（含入场动画 transition + .animate-in） */
         .changelog-hero {
             text-align: center;
             margin: 30px auto 0;
@@ -58,7 +55,7 @@
         }
 
         .changelog-hero p {
-            font-size: 16px;
+            font-size: 15px;
             line-height: 2;
             color: var(--text-secondary);
         }
@@ -67,7 +64,15 @@
             color: var(--accent-color);
         }
 
-        /* 透明内容容器（对齐 PhasWer .card.card-transparent） */
+        .changelog-hero p small {
+            display: block;
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* 透明内容容器*/
         .changelog-content {
             width: calc(97% - 80px);
             max-width: 1600px;
@@ -261,7 +266,7 @@
     <div class="wallpaper-image" aria-hidden="true"></div>
     <div class="wallpaper-mask" aria-hidden="true"></div>
 
-    <!-- 返回按钮：复用转换工具的同款玻璃按钮 -->
+    <!-- 返回按钮 -->
     <a href="newtab.html" class="converter-back glass-effect" title="返回新标签页">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
         返回新标签页
@@ -272,11 +277,12 @@
             <h1><br>屎山是怎样炼成的 :</h1>
             <p>
                 <br>
-                <strong>X.0.0</strong>：底层架构级调整，包括全局 CSS 架构重构、核心 JS 逻辑重写等<br>
-                <strong>X.X.0</strong>：显著外观与功能调整，涉及整体视觉风格或核心功能模块变更<br>
-                <strong>X.X.X</strong>：局部优化级变更，单页面/组件的细节修改、性能优化等<br>
+                <strong>X.0.0</strong>：全局级调整，设计方向或底层架构的根本性变更且影响所有页面和模块<br>
+                <strong>X.X.0</strong>：系统级调整，包括新增功能模块、整体重写某个页面或核心系统<br>
+                <strong>X.X.X</strong>：组件级调整，单组件或页面改动、Bug 修复、性能优化、局部重构<br>
                 <strong>X.X.X Debugged</strong>：问题修复或轻量内容新增，不纳入此页面<br>
-                *Beta 和 Debugged 版本被我吃了
+                *Beta 和 Debugged 版本被我吃了<br>
+                <small>含有"@"的条目为其他开发者贡献，格式为「@GitHub用户名 in #PR编号」，灰鸢（@Gledery）的更改留空</small>
             </p>
         </section>
 

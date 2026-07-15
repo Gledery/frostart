@@ -320,6 +320,21 @@ body.hide-shortcut-names .shortcut-item {
     transform: rotate(60deg);
 }
 
+/* 有新版本时：设置按钮右上角红点*/
+.settings-btn.has-update::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e84545;
+    box-shadow: 0 0 0 2px var(--bg-glass, var(--bg-secondary));
+    animation: update-dot-pulse 2s ease-in-out infinite;
+    z-index: 1;
+}
+
 /* =========================================
    抽屉遮罩层
    ========================================= */
