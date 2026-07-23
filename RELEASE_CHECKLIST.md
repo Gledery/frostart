@@ -5,7 +5,7 @@
 ## 版本号同步
 
 - [ ] `manifest.json` → `"version"`
-- [ ] `js/settings.js` → `VERSION: 'x.x.x'`
+- [ ] `js/changelog.js` → `versions` 数组顶部插入新版本条目
 - [ ] `README.md` → 徽章 `version-x.x.x`
 
 ## 配置默认值同步

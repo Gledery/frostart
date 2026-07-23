@@ -1036,22 +1036,26 @@ function initDataManagement() {
 }
 /* =========================================
    更新检查
-   直接读 GitHub 上 manifest.json 的 version 字段做对比。
-   一旦改仓库名 / 默认分支名，下面两个 URL 必须同步修改。
+   数据源：GitHub Releases API（/releases/latest），同时拿版本号和下载地址。
+   只有正式发布的 Release 才会被识别，main 分支上的开发中版本不会被推给用户。
+   一旦改仓库名，下面两个 URL 必须同步修改。
    ========================================= */
 const UPDATE_REPO = 'Gledery/Frostart';
-const UPDATE_BRANCH = 'main';
-const UPDATE_API = `https://raw.githubusercontent.com/${UPDATE_REPO}/${UPDATE_BRANCH}/manifest.json`;
-const UPDATE_RELEASES_URL = `https://github.com/${UPDATE_REPO}/archive/refs/heads/${UPDATE_BRANCH}.zip`;
+const UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/releases/latest`;
+const UPDATE_RELEASES_PAGE = `https://github.com/${UPDATE_REPO}/releases/latest`;
 const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 小时节流
 
 function initUpdateCheck() {
     const checkBtn = document.getElementById('check-update-btn');
     if (checkBtn) {
         checkBtn.addEventListener('click', () => {
-            // 有更新时点击直接下载最新源码 zip，否则执行检查
+            // 有更新时点击跳转下载对应版本安装包，否则执行检查
             if (checkBtn.classList.contains('has-update')) {
-                window.open(UPDATE_RELEASES_URL, '_blank', 'noopener');
+                let downloadUrl = UPDATE_RELEASES_PAGE;
+                try {
+                    downloadUrl = localStorage.getItem('frostart_update_download_url') || UPDATE_RELEASES_PAGE;
+                } catch (e) {}
+                window.open(downloadUrl, '_blank', 'noopener');
             } else {
                 checkForUpdates(true);
             }
@@ -1059,6 +1063,21 @@ function initUpdateCheck() {
     }
     // 打开新标签页时静默检查（受 6 小时节流控制）
     checkForUpdates(false);
+}
+
+/* 从 Release 响应解析版本号和下载地址。
+   下载优先级：手动上传的 asset > tag 源码包(zipball) > Release 网页 */
+function parseRelease(data) {
+    if (!data || !data.tag_name) return null;
+    // tag_name 形如 "v1.1.1"，去掉 v 前缀得到纯版本号
+    const version = data.tag_name.replace(/^v/i, '');
+    let downloadUrl = data.html_url || UPDATE_RELEASES_PAGE;
+    if (data.assets && data.assets.length > 0 && data.assets[0].browser_download_url) {
+        downloadUrl = data.assets[0].browser_download_url;
+    } else if (data.zipball_url) {
+        downloadUrl = data.zipball_url;
+    }
+    return { version, downloadUrl };
 }
 
 async function checkForUpdates(manual) {
@@ -1083,23 +1102,34 @@ async function checkForUpdates(manual) {
     }
 
     try {
-        const res = await fetch(UPDATE_API);
-
         let latestVersion = null;
+        let downloadUrl = null;
 
+        // 主源：GitHub Releases API
+        const res = await fetch(UPDATE_API);
         if (res.ok) {
             const data = await res.json();
-            latestVersion = data.version || null;
+            const info = parseRelease(data);
+            if (info) {
+                latestVersion = info.version;
+                downloadUrl = info.downloadUrl;
+            }
         }
-        // 404 = 仓库还没推上去 / 私有 / 网络挂了，静默处理
+        // 失败 = 还没有正式 Release / 网络问题，静默处理，不提示更新
 
         // 缓存结果
         try {
             localStorage.setItem('frostart_update_check', String(Date.now()));
             if (latestVersion) {
                 localStorage.setItem('frostart_update_latest', latestVersion);
+                if (downloadUrl) {
+                    localStorage.setItem('frostart_update_download_url', downloadUrl);
+                } else {
+                    localStorage.removeItem('frostart_update_download_url');
+                }
             } else {
                 localStorage.removeItem('frostart_update_latest');
+                localStorage.removeItem('frostart_update_download_url');
             }
         } catch (e) {}
 

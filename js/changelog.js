@@ -6,6 +6,14 @@
 
 const versions = [
     {
+        version: '1.1.1', date: '2026-7-23',
+        changes: [
+            '变更：更新检查改用 GitHub Releases API，只有正式发布的 Release 才会被识别',
+            '变更：发现新版本后点击按钮会跳转到对应版本的 Release 页面下载安装包',
+            '变更：更新 README 的更新章节和发版检查清单以反映新的发版流程',
+        ]
+    },
+    {
         version: '1.1.0', date: '2026-7-15',
         changes: [
             '重构：抽取工具函数到 js/utils/ 目录（数学、字符串、版本比较、色彩转换） @DragonHTDev in #2',
