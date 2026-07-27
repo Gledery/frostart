@@ -1,6 +1,6 @@
 # 隐私声明
 
-**最后更新：2026-06-26**
+**最后更新：2026-07-27**
 
 **关于隐私：**
 
@@ -24,8 +24,9 @@
 - **自定义字体**：当你设置了非系统字体时，浏览器会向 `fonts.googleapis.com`（Google Fonts）请求字体文件
 - **默认图标**：快捷方式未上传自定义图标时，浏览器会向 `icons.duckduckgo.com`（DuckDuckGo favicon 服务）请求该网站的图标。请求 URL 形如 `https://icons.duckduckgo.com/ip3/<目标域名>.ico`
 - **必应每日壁纸**：当你选择"必应每日壁纸"模式时，浏览器会向 `www.bing.com` 请求壁纸数据和图片。数据接口形如 `https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN`，图片 URL 形如 `https://www.bing.com/az/hprichbg/rb/<图片名>_1920x1080.jpg`
+- **更新检查**：打开新标签页时（受 6 小时节流控制），浏览器会向 `api.github.com` 请求本项目的最新 Release 信息（`https://api.github.com/repos/Gledery/Frostart/releases/latest`），用于对比版本号。该请求由 GitHub 直接响应，本项目不收集任何回传数据
 
-鸢没有服务器，既看不到也无法获取这些请求的内容。若你希望完全不发起任何外部请求，可只使用系统字体、为快捷方式上传自定义图标，且不开启必应每日壁纸模式。
+鸢没有服务器，既看不到也无法获取这些请求的内容。其中更新检查请求无法关闭（但受 6 小时节流，不会频繁发起）；字体、图标、壁纸三类请求则可按需关闭：只使用系统字体、为快捷方式上传自定义图标、且不开启必应每日壁纸模式，即可避免这三类外部请求
 
 ---
 

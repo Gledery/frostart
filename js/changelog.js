@@ -6,6 +6,17 @@
 
 const versions = [
     {
+        version: '1.2.0', date: '2026-7-27',
+        changes: [
+            '样式：阴影改为双层模型，同时加强了凹陷阴影 inset',
+            '修复：补齐了全项目缺失的触屏门控（@media (hover: none) 重置块）',
+            '优化：search-box 按压从 scale(0.96) 改为 scale(0.9)',
+            '优化：角落颜文字入场触发从 setTimeout 改为双 requestAnimationFrame，错峰延迟移交给 CSS transition-delay',
+            '清理：changelog 页内联样式里的 transition: all 改为具体属性列表',
+            '新增：新增 AGENTS.md',
+        ]
+    },
+    {
         version: '1.1.1', date: '2026-7-23',
         changes: [
             '变更：更新检查改用 GitHub Releases API，只有正式发布的 Release 才会被识别',

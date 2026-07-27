@@ -34,7 +34,8 @@
 }
 
 .search-box:active {
-    transform: scale(0.96);
+    transform: scale(0.9);
+    box-shadow: var(--shadow-sm);
 }
 
 .search-box:focus-within {
@@ -195,6 +196,7 @@
     transition:
         transform 0.3s cubic-bezier(0.2, 0.8, 0.4, 1),
         background-color var(--time-normal) var(--easing-standard),
+        box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.4, 1),
         opacity var(--time-fast) var(--easing-standard);
 }
 
@@ -208,10 +210,12 @@ body.hide-shortcut-names .shortcut-item {
 
 .shortcut-item:hover {
     transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
 }
 
 .shortcut-item:active {
     transform: scale(0.9);
+    box-shadow: none;
 }
 
 .shortcut-icon {
@@ -856,6 +860,7 @@ body.hide-shortcut-names .shortcut-item {
 
 .font-preset-btn:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 .font-preset-btn.active {
@@ -1130,6 +1135,7 @@ body.hide-shortcut-names .shortcut-item {
 
 .option-btn:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 .option-btn.active {
@@ -1287,6 +1293,7 @@ body.hide-shortcut-names .shortcut-item {
 
 .upload-btn:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 /* =========================================
@@ -1406,6 +1413,7 @@ body.hide-shortcut-names .shortcut-item {
 
 .color-reset-btn:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 .color-picker {
@@ -1430,6 +1438,7 @@ body.hide-shortcut-names .shortcut-item {
 
 .color-picker:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 .color-picker:disabled {
@@ -1588,6 +1597,7 @@ body.hide-shortcut-names .shortcut-item {
 
 .add-shortcut-btn:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 /* =========================================
@@ -1612,18 +1622,17 @@ body.hide-shortcut-names .shortcut-item {
     box-shadow: var(--shadow-sm);
     text-decoration: none;
     color: inherit;
-    transition:
-        transform var(--time-fast) ease,
-        box-shadow var(--time-normal) ease;
+    transition: transform var(--time-normal) ease, box-shadow var(--time-normal) ease;
 }
 
 .about-card:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
 }
 
 .about-card:active {
     transform: scale(0.9);
+    box-shadow: var(--shadow-sm);
 }
 
 /* 项目主卡（最突出）：更大的内边距、玻璃底、更强阴影 */
@@ -1855,6 +1864,7 @@ button.about-link-btn {
 
 .data-btn:active {
     transform: scale(0.85);
+    box-shadow: var(--shadow-sm);
 }
 
 /* 有新版本时：检查更新按钮变为 accent 渐变背景 + 右上角红点 */
@@ -2181,6 +2191,7 @@ button.about-link-btn {
 
 .pack-download-btn:active {
     transform: scale(0.85);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-color) 35%, transparent);
 }
 
 .pack-download-btn:disabled {
@@ -2752,7 +2763,7 @@ button.about-link-btn {
     -webkit-user-drag: none;
     opacity: 0;
     transform: translateX(-20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition: opacity 0.5s 0.2s ease, transform 0.5s 0.2s ease;
 }
 
 .corner-kaomoji.animate-in {
@@ -2826,4 +2837,38 @@ button.about-link-btn {
     --border-glass: 2px solid rgba(255, 255, 255, 0.3);
     --text-primary: #1a1a2a;
     color: var(--text-primary);
+}
+
+/* =========================================
+   触屏门控：重置所有 transform 型 hover
+   触屏设备 tap 后 :hover 会粘连（直到点别处才消失），必须在这里重置
+   新增带 transform 的 hover 时，记得把选择器加进来
+   ========================================= */
+@media (hover: none) {
+    .search-box:hover,
+    .search-engine-indicator:hover,
+    .engine-popup-item:hover,
+    .shortcut-item:hover,
+    .shortcut-item:hover .shortcut-icon,
+    .settings-btn:hover,
+    .settings-btn:hover svg,
+    .close-btn:hover,
+    .switch:hover .switch-slider,
+    .slider::-webkit-slider-thumb:hover,
+    .gradient-preset:hover,
+    .color-picker:hover,
+    .shortcut-action-btn:hover,
+    .engine-chip:hover .engine-chip-icon,
+    .about-card:hover,
+    .about-card:hover .about-logo,
+    .about-card:hover .about-avatar,
+    .about-card:hover .about-site-logo,
+    .storage-refresh-btn:hover,
+    .accent-swatch:hover,
+    .accent-custom:hover,
+    .accent-reset:hover,
+    .corner-kaomoji:hover .face,
+    .converter-actions button:not(:disabled):hover {
+        transform: none !important;
+    }
 }

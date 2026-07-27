@@ -94,7 +94,7 @@ const KaomojiWidget = (function () {
     let idleActionTimer = null;
     let idleWiggleTimer = null;
     let popTimeout = null;
-    let initTimer = null;
+    let initFrame = null;
     let isIdle = false;
     let wasIdle = false;
     let generation = 0;
@@ -399,17 +399,23 @@ const KaomojiWidget = (function () {
         generation = 0;
         faceEl.textContent = defaultFace;
 
-        initTimer = setTimeout(function () {
-            el.classList.add('animate-in');
-            scheduleIdleAction(10000);
-        }, 400);
+        // 双 rAF 确保初始态（opacity:0 + translateX(-20px)）被浏览器渲染后再添加 .animate-in，
+        // 否则浏览器会把两态合并成同一帧，过渡不触发，元素直接出现
+        // 错峰延迟交给 CSS transition-delay（见 components.css .corner-kaomoji）
+        initFrame = requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                if (!active) return;
+                el.classList.add('animate-in');
+                scheduleIdleAction(10000);
+            });
+        });
     }
 
     // 销毁：移除 DOM、清理所有定时器
     function destroy() {
         active = false;
         clearAllTimers();
-        clearTimeout(initTimer);
+        cancelAnimationFrame(initFrame);
         if (el) {
             el.removeEventListener('click', onClick);
             el.removeEventListener('keydown', onKeydown);
