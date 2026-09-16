@@ -521,7 +521,7 @@ const FROSTART_DEFAULTS = {
     searchTextColor: '',
     searchPlaceholderColor: '',
     globalTextColor: '',
-    clockSize: 88,
+    clockSize: 100,
     searchWidth: 650,
     contentPosition: 18,
     iconMaxWidth: 960,
@@ -783,7 +783,7 @@ function convertFrostartToItab(fs) {
             },
             time: {
                 show: true,
-                size: fs.clockSize || 88,
+                size: fs.clockSize || 100,
                 color: fs.clockColor || '#FFFFFF',
                 hour24: (fs.timeFormat || 24) === 24,
                 sec: fs.showSeconds || false,

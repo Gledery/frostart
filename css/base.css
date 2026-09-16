@@ -332,6 +332,8 @@ body.wp-instant .wallpaper-mask {
    ========================================= */
 .time-display {
     text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
     opacity: 0;
     animation: enter-fade-up var(--time-slow) var(--easing-enter) forwards;
     animation-delay: 0.15s;
