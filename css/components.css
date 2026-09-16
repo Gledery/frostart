@@ -210,7 +210,6 @@ body.hide-shortcut-names .shortcut-item {
 
 .shortcut-item:hover {
     transform: translateY(-6px);
-    box-shadow: var(--shadow-lg);
 }
 
 .shortcut-item:active {
