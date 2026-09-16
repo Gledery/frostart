@@ -32,8 +32,15 @@ const Packager = {
         'css/components.css',
         'css/pages.css',
         // 脚本
+        // 工具函数库
+        'js/utils/math-utils.js',
+        'js/utils/string-utils.js',
+        'js/utils/version-utils.js',
+        'js/utils/color-utils.js',
+        'js/utils/font-utils.js',
         'js/settings.js',
         'js/wp-cache.js',
+        'js/services.js',
         'js/kaomoji.js',
         'js/core.js',
         'js/sliders.js',
