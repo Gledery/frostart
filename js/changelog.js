@@ -268,7 +268,7 @@ function renderVersions() {
     if (!versions.length) {
         const empty = document.createElement('div');
         empty.className = 'version-empty';
-        empty.textContent = '暂无版本记录';
+        empty.textContent = I18N.t('changelog.empty');
         list.appendChild(empty);
         return;
     }

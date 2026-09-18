@@ -57,11 +57,19 @@ function initSliders() {
    每个 slider-value 点击后变成输入框，回车/失焦时写入。
    支持特殊词：跟随/默认/-1、隐藏/0、胶囊/9999。
    ========================================= */
+/* 特殊词 → 数值映射。中英双语都接受：
+   用户可能在中文界面保存了中文词，切到英文后又输入英文词，
+   历史数据也可能是中文，所以解析不能只认当前语言。
+   匹配时统一小写（中文不受影响） */
 const EDITABLE_WORD_MAP = {
-    '跟随': -1,
-    '默认': -1,
-    '隐藏': 0,
-    '胶囊': 9999
+    '跟随': -1,      // follow
+    '默认': -1,      // default
+    '隐藏': 0,       // hidden
+    '胶囊': 9999,    // pill
+    'follow': -1,
+    'default': -1,
+    'hidden': 0,
+    'pill': 9999
 };
 
 function getSliderMeta(sliderId) {
@@ -85,9 +93,10 @@ function clampSliderValue(sliderId, value) {
 function parseEditableInput(sliderId, raw) {
     const text = (raw || '').trim();
     if (!text) return null;
-    // 中文特殊词
-    if (EDITABLE_WORD_MAP[text] !== undefined) {
-        return EDITABLE_WORD_MAP[text];
+    // 特殊词（中英双语都识别，匹配时忽略大小写）
+    const wordVal = EDITABLE_WORD_MAP[text.toLowerCase()];
+    if (wordVal !== undefined) {
+        return wordVal;
     }
     // 提取首个数字（支持带 px/% 等单位）
     const m = text.match(/-?\d+(\.\d+)?/);
@@ -175,7 +184,7 @@ function startEditingValue(display, slider) {
 
 function handleIconBlurChange(value, display, unit) {
     if (display) {
-        display.textContent = value === -1 ? `跟随` : `${value}${unit}`;
+        display.textContent = value === -1 ? I18N.t('word.follow') : `${value}${unit}`;
     }
     SettingsManager.set('iconBlur', value);
     if (value >= 0) {
@@ -195,7 +204,7 @@ function applyIconBgOpacity(value) {
 
 function handleIconBgChange(value, display, unit) {
     if (display) {
-        display.textContent = value === -1 ? `默认` : `${value}${unit}`;
+        display.textContent = value === -1 ? I18N.t('word.default') : `${value}${unit}`;
     }
     SettingsManager.set('iconBgOpacity', value);
     applyIconBgOpacity(value);
@@ -211,7 +220,7 @@ function handleIconMaxWidthChange(value, display) {
 
 function handleShortcutNameSizeChange(value, display, unit) {
     if (display) {
-        display.textContent = value === 0 ? '隐藏' : `${value}${unit}`;
+        display.textContent = value === 0 ? I18N.t('word.hidden') : `${value}${unit}`;
     }
     SettingsManager.set('shortcutNameSize', value);
     document.documentElement.style.setProperty('--shortcut-name-size', value === 0 ? '0px' : `${value}px`);
@@ -225,7 +234,7 @@ function applySearchRadiusValue(value) {
     document.documentElement.style.setProperty('--search-radius', cssRadius);
 }
 function formatSearchRadiusLabel(value) {
-    return value >= SEARCH_RADIUS_MAX ? '胶囊' : `${value}px`;
+    return value >= SEARCH_RADIUS_MAX ? I18N.t('word.pill') : `${value}px`;
 }
 function handleSearchRadiusChange(value, display) {
     if (display) display.textContent = formatSearchRadiusLabel(value);
@@ -271,14 +280,14 @@ function updateSliderValues() {
 
         if (display && settings[key] !== undefined) {
             if (special === true) {
-                display.textContent = settings[key] === -1 ? '跟随' : `${settings[key]}${unit}`;
+                display.textContent = settings[key] === -1 ? I18N.t('word.follow') : `${settings[key]}${unit}`;
             } else if (special === 'iconOpacity') {
-                display.textContent = settings[key] === -1 ? '默认' : `${settings[key]}${unit}`;
+                display.textContent = settings[key] === -1 ? I18N.t('word.default') : `${settings[key]}${unit}`;
             } else if (special === 'maxwidth') {
                 const u = settings.iconMaxWidthUnit || 'px';
                 display.textContent = `${settings[key]}${u}`;
             } else if (special === 'nameSize') {
-                display.textContent = settings[key] === 0 ? '隐藏' : `${settings[key]}${unit}`;
+                display.textContent = settings[key] === 0 ? I18N.t('word.hidden') : `${settings[key]}${unit}`;
             } else if (special === 'searchRadius') {
                 display.textContent = formatSearchRadiusLabel(settings[key] >= 9999 ? SEARCH_RADIUS_MAX : settings[key]);
             } else {

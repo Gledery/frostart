@@ -10,6 +10,8 @@ const SettingsManager = {
     BACKUP_KEY: 'frostartSettings_backup',
     
     defaultSettings: {
+        // 界面语言：auto=跟随浏览器，也可手动指定 zh/en
+        lang: 'auto',
         theme: 'auto',
         // 自定义主题色：空字符串表示使用主题默认 accent（浅色#5b6ee1 / 深色#7c8aef）
         accentColor: '',
@@ -249,10 +251,10 @@ const SettingsManager = {
                     this.saveNow();
                     resolve(this.settings);
                 } catch (err) {
-                    reject(new Error('配置文件格式不太对'));
+                    reject(new Error(I18N.t('error.configFormat')));
                 }
             };
-            reader.onerror = () => reject(new Error('文件读取失败'));
+            reader.onerror = () => reject(new Error(I18N.t('error.readFailed')));
             reader.readAsText(file);
         });
     },

@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>更新日志 | Frostart</title>
+    <title data-i18n="changelog.title">更新日志 | Frostart</title>
     <link rel="icon" href="icons/Frostart2606-64px.png" type="image/png">
     <link rel="apple-touch-icon" href="icons/Frostart2606-256px.png">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/pages.css">
+    <!-- i18n 必须最早加载：changelog.js 的空态文案依赖 I18N -->
+    <script src="js/i18n.js"></script>
     <!-- 启动前同步主题与 accent-color（与转换工具一致）。
          MV3 默认 CSP 禁止内联脚本，必须用外部文件。 -->
     <script src="js/page-theme.js"></script>
@@ -266,16 +268,16 @@
     <div class="wallpaper-image" aria-hidden="true"></div>
     <div class="wallpaper-mask" aria-hidden="true"></div>
 
-    <!-- 返回按钮 -->
-    <a href="newtab.html" class="converter-back glass-effect" title="返回新标签页">
+    <!-- 返回按钮（文字包 span，避免 data-i18n 的 textContent 覆盖掉 svg） -->
+    <a href="newtab.html" class="converter-back glass-effect" data-i18n-title="page.backToNewTabTitle" title="返回新标签页">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        返回新标签页
+        <span data-i18n="page.backToNewTab">返回新标签页</span>
     </a>
 
     <main class="changelog-main">
         <section class="changelog-hero">
-            <h1><br>屎山是怎样炼成的 :</h1>
-            <p>
+            <h1 data-i18n-html="changelog.heroTitle"><br>屎山是怎样炼成的 :</h1>
+            <p data-i18n-html="changelog.heroBody">
                 <br>
                 <strong>X.0.0</strong>：全局级调整，设计方向或底层架构的根本性变更且影响所有页面和模块<br>
                 <strong>X.X.0</strong>：系统级调整，包括新增功能模块、整体重写某个页面或核心系统<br>

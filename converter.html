@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frostart 数据转换工具</title>
+    <title data-i18n="converter.title">Frostart 数据转换工具</title>
+    <!-- i18n 最早加载：内联主逻辑的动态文案依赖 I18N（独立网页，内联脚本是允许的例外） -->
+    <script src="js/i18n.js"></script>
     <!--
       主题：自动跟随 Frostart 主站设置
             （扩展环境读 chrome.storage.local；纯网页读 localStorage）。
@@ -415,16 +417,17 @@
         <div class="blob blob-2"></div>
     </div>
 
-    <!-- 返回按钮：仅作为扩展页面打开时才有意义；独立网页打开时点击会 404，无副作用 -->
-    <a href="newtab.html" class="converter-back glass-effect" title="返回新标签页">
+    <!-- 返回按钮：仅作为扩展页面打开时才有意义；独立网页打开时点击会 404，无副作用。
+         文字包 span，避免 data-i18n 的 textContent 覆盖掉 svg -->
+    <a href="newtab.html" class="converter-back glass-effect" data-i18n-title="page.backToNewTabTitle" title="返回新标签页">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        返回新标签页
+        <span data-i18n="page.backToNewTab">返回新标签页</span>
     </a>
 
     <div class="converter-page">
         <div class="converter-card glass-effect">
-            <h1>Frostart 数据转换</h1>
-            <p class="converter-subtitle">在 iTab 和 Frostart 格式之间互相转换</p>
+            <h1 data-i18n="converter.h1">Frostart 数据转换</h1>
+            <p class="converter-subtitle" data-i18n="converter.subtitle">在 iTab 和 Frostart 格式之间互相转换</p>
 
             <nav class="tab-nav" role="tablist">
                 <button class="tab-btn active" data-ctab="import" role="tab">iTab → Frostart</button>
@@ -439,19 +442,19 @@
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <p>点击或拖拽 iTab 备份文件到这里</p>
-                    <p class="ext">支持 .itabdata 格式</p>
+                    <p data-i18n="converter.dropItab">点击或拖拽 iTab 备份文件到这里</p>
+                    <p class="ext" data-i18n="converter.itabExt">支持 .itabdata 格式</p>
                     <input type="file" id="itab-input" accept=".itabdata,.json" style="display:none;">
                 </div>
                 <div class="converter-preview" id="import-preview" style="display:none;"></div>
                 <div class="converter-actions">
                     <button class="btn-primary" id="convert-btn" disabled>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                        转换并下载
+                        <span data-i18n="converter.convertDownload">转换并下载</span>
                     </button>
                     <button class="btn-import-now" id="import-now-btn" disabled>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        导入到新标签页
+                        <span data-i18n="converter.importNow">导入到新标签页</span>
                     </button>
                 </div>
             </div>
@@ -464,26 +467,26 @@
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <p>点击或拖拽 Frostart 备份文件</p>
-                    <p class="ext">支持 .frostartdata 格式</p>
+                    <p data-i18n="converter.dropFrostart">点击或拖拽 Frostart 备份文件</p>
+                    <p class="ext" data-i18n="converter.frostartExt">支持 .frostartdata 格式</p>
                     <input type="file" id="frostart-input" accept=".frostartdata,.json" style="display:none;">
                 </div>
                 <div class="converter-actions" style="margin-top:0;">
                     <button id="export-current-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        从当前新标签页导出
+                        <span data-i18n="converter.exportCurrent">从当前新标签页导出</span>
                     </button>
                 </div>
                 <div class="converter-preview" id="export-preview" style="display:none;"></div>
                 <div class="converter-actions">
                     <button class="btn-primary" id="export-itab-btn" disabled>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                        转换为 iTab 格式
+                        <span data-i18n="converter.convertToItab">转换为 iTab 格式</span>
                     </button>
                 </div>
             </div>
 
-            <div class="converter-info">
+            <div class="converter-info" data-i18n-html="converter.info">
                 <strong>格式说明</strong><br>
                 <strong>.itabdata</strong> — iTab 插件备份格式，包含导航图标、搜索引擎、壁纸等<br>
                 <strong>.frostartdata</strong> — Frostart 新标签页格式，包含全部设置与快捷方式<br>
@@ -499,10 +502,42 @@
    Frostart 数据转换工具主逻辑
    ========================================= */
 
+/* 文案：优先用 js/i18n.js 的 I18N；
+   本页也支持脱离 js/ 目录当单文件打开，此时 I18N 不存在，
+   用下面这份内联中文兜底（静态 HTML 的中文默认内容会自然保留） */
+const T = (window.I18N && typeof window.I18N.t === 'function')
+    ? window.I18N.t.bind(window.I18N)
+    : (function () {
+        const fallback = {
+            'converter.unnamed': '未命名',
+            'converter.statsImport': '{n} 个快捷方式，{m} 个自定义引擎',
+            'converter.importPreviewTitle': '转换预览',
+            'converter.shortcutList': '快捷方式列表:',
+            'converter.parseOk': '解析成功~ {stats}',
+            'converter.parseFailed': '文件解析失败：',
+            'converter.downloadedFrostart': '已下载 .frostartdata 文件',
+            'converter.importedJump': '已导入~ 正在跳转到新标签页…',
+            'converter.statsExport': '{n} 个快捷方式',
+            'converter.exportPreviewTitle': '数据预览',
+            'converter.shortcutsLabel': '快捷方式：',
+            'converter.noData': '当前没有存储的数据哦',
+            'converter.dataRead': '已读取当前数据~',
+            'converter.downloadedItab': '已下载 .itabdata 文件~'
+        };
+        return function (key, vars) {
+            let s = fallback[key] != null ? fallback[key] : key;
+            if (vars) s = s.replace(/\{(\w+)\}/g, function (_, name) {
+                return vars[name] != null ? vars[name] : '{' + name + '}';
+            });
+            return s;
+        };
+    })();
+
 /* Frostart 默认设置（与 settings.js defaultSettings 手动对齐）
    ⚠️ 修改 settings.js 的 defaultSettings 后需同步更新此处。 */
 const FROSTART_DEFAULTS = {
     theme: 'auto',
+    lang: 'auto',
     accentColor: '',
     blur: 8,
     opacity: 100,
@@ -647,7 +682,7 @@ function convertItabToFrostart(itab) {
             if (item.url) {
                 shortcuts.push({
                     id: id++,
-                    name: item.name || '未命名',
+                    name: item.name || T('converter.unnamed'),
                     url: item.url,
                     icon: item.src || ''
                 });
@@ -834,15 +869,15 @@ function handleItabFile(file) {
         try {
             itabData = JSON.parse(reader.result);
             const converted = convertItabToFrostart(itabData);
-            const stats = `${converted.shortcuts.length} 个快捷方式，${converted.customEngines.length} 个自定义引擎`;
+            const stats = T('converter.statsImport', { n: converted.shortcuts.length, m: converted.customEngines.length });
             document.getElementById('import-preview').style.display = 'block';
             document.getElementById('import-preview').innerHTML =
-                `<strong>转换预览</strong>\n${stats}\n\n快捷方式列表:\n${converted.shortcuts.map(s => `  • ${s.name} → ${s.url.substring(0,50)}`).join('\n')}`;
+                `<strong>${T('converter.importPreviewTitle')}</strong>\n${stats}\n\n${T('converter.shortcutList')}\n${converted.shortcuts.map(s => `  • ${escapeHtml(s.name)} → ${escapeHtml(s.url.substring(0,50))}`).join('\n')}`;
             document.getElementById('convert-btn').disabled = false;
             document.getElementById('import-now-btn').disabled = false;
-            showToast('解析成功~ ' + stats);
+            showToast(T('converter.parseOk', { stats }));
         } catch (err) {
-            showToast('文件解析失败：' + err.message, true);
+            showToast(T('converter.parseFailed') + err.message, true);
         }
     };
     reader.readAsText(file);
@@ -853,14 +888,14 @@ document.getElementById('convert-btn').addEventListener('click', () => {
     const converted = convertItabToFrostart(itabData);
     const date = new Date().toISOString().slice(0, 10);
     downloadFile(`frostart-backup-${date}.frostartdata`, converted);
-    showToast('已下载 .frostartdata 文件');
+    showToast(T('converter.downloadedFrostart'));
 });
 
 document.getElementById('import-now-btn').addEventListener('click', async () => {
     if (!itabData) return;
     const converted = convertItabToFrostart(itabData);
     await writeFrostartSettings(converted);
-    showToast('已导入~ 正在跳转到新标签页…');
+    showToast(T('converter.importedJump'));
     setTimeout(() => window.location.href = 'newtab.html', 1000);
 });
 
@@ -889,29 +924,29 @@ function handleFrostartFile(file) {
             frostartData = JSON.parse(reader.result);
             showExportPreview(frostartData);
         } catch (err) {
-            showToast('文件解析失败：' + err.message, true);
+            showToast(T('converter.parseFailed') + err.message, true);
         }
     };
     reader.readAsText(file);
 }
 
 function showExportPreview(data) {
-    const stats = `${(data.shortcuts || []).length} 个快捷方式`;
+    const stats = T('converter.statsExport', { n: (data.shortcuts || []).length });
     document.getElementById('export-preview').style.display = 'block';
     document.getElementById('export-preview').innerHTML =
-        `<strong>数据预览</strong>\n${stats}\n\n快捷方式：\n${(data.shortcuts || []).map(s => `  • ${escapeHtml(s.name)}`).join('\n')}`;
+        `<strong>${T('converter.exportPreviewTitle')}</strong>\n${stats}\n\n${T('converter.shortcutsLabel')}\n${(data.shortcuts || []).map(s => `  • ${escapeHtml(s.name)}`).join('\n')}`;
     document.getElementById('export-itab-btn').disabled = false;
 }
 
 document.getElementById('export-current-btn').addEventListener('click', async () => {
     const settings = await readFrostartSettings();
     if (!settings) {
-        showToast('当前没有存储的数据哦', true);
+        showToast(T('converter.noData'), true);
         return;
     }
     frostartData = settings;
     showExportPreview(frostartData);
-    showToast('已读取当前数据~');
+    showToast(T('converter.dataRead'));
 });
 
 document.getElementById('export-itab-btn').addEventListener('click', () => {
@@ -919,7 +954,7 @@ document.getElementById('export-itab-btn').addEventListener('click', () => {
     const converted = convertFrostartToItab(frostartData);
     const date = new Date().toISOString().slice(0, 10);
     downloadFile(`itab-backup-${date}.itabdata`, converted);
-    showToast('已下载 .itabdata 文件~');
+    showToast(T('converter.downloadedItab'));
 });
     </script>
 </body>

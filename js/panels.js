@@ -79,14 +79,14 @@ function initWallpaperSettings() {
         const file = e.target.files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) {
-            showToast('请选择图片文件', 'error');
+            showToast(I18N.t('toast.selectImage'), 'error');
             return;
         }
         compressImage(file, 1920, 0.85, (dataUrl) => {
             SettingsManager.set('wallpaperImage', dataUrl);
             applyWallpaper(SettingsManager.getAll());
             updateWallpaperUI(SettingsManager.getAll());
-            showToast('壁纸已设置');
+            showToast(I18N.t('toast.wallpaperSet'));
         });
         uploadInput.value = '';
     });
@@ -103,7 +103,7 @@ function initWallpaperSettings() {
             return;
         }
         if (!/^https?:\/\//i.test(val) && !val.startsWith('data:')) {
-            showToast('网址不太对哦，要以 http:// 或 https:// 开头', 'error');
+            showToast(I18N.t('toast.wrongUrl'), 'error');
             return;
         }
         SettingsManager.set('wallpaperImage', val);
@@ -218,7 +218,7 @@ function initWallpaperSettings() {
             // 开启跟随渐变：清空自定义色，交由背景派生
             SettingsManager.set('blobColor1', '');
             SettingsManager.set('blobColor2', '');
-            showToast('光斑已恢复跟随渐变~');
+            showToast(I18N.t('toast.blobFollow'));
         } else {
             // 关闭跟随渐变：以当前生效色作为自定义起点，避免视觉突变
             SettingsManager.set('blobColor1', getEffectiveBlobHex(1));
@@ -259,7 +259,7 @@ function initWallpaperSettings() {
         SettingsManager.set('blobColor2', '');
         applyWallpaper(SettingsManager.getAll());
         syncBlobFollowState();
-        showToast('已恢复默认渐变');
+        showToast(I18N.t('toast.gradientReset'));
     });
 
     // 必应每日壁纸：手动刷新
@@ -269,7 +269,7 @@ function initWallpaperSettings() {
             if (typeof refreshBingWallpaper !== 'function') return;
             bingRefreshBtn.disabled = true;
             const orig = bingRefreshBtn.textContent;
-            bingRefreshBtn.textContent = '刷新中…';
+            bingRefreshBtn.textContent = I18N.t('state.refreshing');
             refreshBingWallpaper(true).finally(() => {
                 bingRefreshBtn.disabled = false;
                 bingRefreshBtn.textContent = orig;
@@ -318,7 +318,7 @@ function updateWallpaperUI(settings) {
         } else {
             preview.style.backgroundImage = '';
             preview.classList.add('empty');
-            preview.textContent = '尚未设置图片';
+            preview.textContent = I18N.t('wallpaper.noImageSet');
         }
     }
 
@@ -392,12 +392,12 @@ function initSearchEngine() {
             const pinned = getPinnedEngines();
             const isPinned = pinned.includes(engine);
             if (engine === SettingsManager.get('searchEngine') && isPinned) {
-                showToast('默认引擎需要留在列表里OwO');
+                showToast(I18N.t('toast.defaultEngineStay'));
                 return;
             }
             toggleEnginePinned(engine);
             renderSearchEngineGrid();
-            showToast(isPinned ? '已移出快捷切换' : '已加入快捷切换~');
+            showToast(isPinned ? I18N.t('toast.removedQuick') : I18N.t('toast.addedQuick'));
         });
     }
 
@@ -420,7 +420,7 @@ function renderSearchEngineGrid() {
     // 已加入的排在前面，其余按内置顺序在后
     const entries = Object.entries(SEARCH_ENGINES).map(([key, cfg]) => ({
         key,
-        label: cfg.label,
+        label: getEngineLabel(key),
         pinned: pinned.includes(key)
     }));
     entries.sort((a, b) => {
@@ -438,7 +438,7 @@ function renderSearchEngineGrid() {
                 </span>
                 <img src="icons/search-engine/${en.key}.svg" alt="${escapeHtml(en.label)}" class="engine-chip-icon">
                 <span class="engine-chip-name">${escapeHtml(en.label)}</span>
-                ${isCurrent ? '<span class="engine-chip-current">默认</span>' : ''}
+                ${isCurrent ? `<span class="engine-chip-current">${escapeHtml(I18N.t('badge.default'))}</span>` : ''}
             </button>`;
     }).join('');
     grid.innerHTML = html;
@@ -453,7 +453,7 @@ function updateSearchEngineUI(engine) {
         if (isCurrent && !badge) {
             badge = document.createElement('span');
             badge.className = 'engine-chip-current';
-            badge.textContent = '默认';
+            badge.textContent = I18N.t('badge.default');
             btn.appendChild(badge);
         } else if (!isCurrent && badge) {
             badge.remove();
@@ -622,7 +622,7 @@ function initTextColors() {
             SettingsManager.set('globalTextColor', '');
             if (globalPicker) globalPicker.value = GLOBAL_FALLBACK;
             applyTextColors(SettingsManager.getAll());
-            showToast('已重置所有文本颜色');
+            showToast(I18N.t('toast.colorsReset'));
         });
     }
 }
@@ -690,24 +690,24 @@ function initCustomEngines() {
             const url = urlInput.value.trim();
 
             if (!name || !url) {
-                showToast('请填写名称和 URL', 'error');
+                showToast(I18N.t('toast.fillNameUrl'), 'error');
                 return;
             }
             if (!url.includes('%s')) {
-                showToast('URL 必须包含 %s', 'error');
+                showToast(I18N.t('toast.urlNeedsS'), 'error');
                 return;
             }
             // 安全校验：只允许 http/https 搜索引擎 URL，防止 javascript:/data: 等协议
             // 在 window.open / location.href 中触发 XSS（防御导入恶意配置的场景）
             const testUrl = url.replace('%s', 'test');
             if (!/^https?:\/\//i.test(testUrl)) {
-                showToast('URL 必须以 http:// 或 https:// 开头', 'error');
+                showToast(I18N.t('toast.urlHttp'), 'error');
                 return;
             }
             try {
                 new URL(testUrl);
             } catch (e) {
-                showToast('URL 格式不太对', 'error');
+                showToast(I18N.t('toast.urlBadFormat'), 'error');
                 return;
             }
 
@@ -730,7 +730,7 @@ function initCustomEngines() {
             Frostart.state.pendingEngineIconStyle = null;
             renderCustomEngines();
             overlay.classList.remove('open');
-            showToast('引擎已添加~');
+            showToast(I18N.t('toast.engineAdded'));
         });
     }
 
@@ -763,7 +763,7 @@ function renderCustomEngines() {
     const engines = SettingsManager.get('customEngines') || [];
 
     if (engines.length === 0) {
-        list.innerHTML = '<div class="setting-hint" style="padding:8px 0;">暂无自定义引擎</div>';
+        list.innerHTML = `<div class="setting-hint" style="padding:8px 0;">${escapeHtml(I18N.t('hint.noCustomEngines'))}</div>`;
         return;
     }
 
@@ -775,14 +775,14 @@ function renderCustomEngines() {
                 </div>
                 <div class="shortcut-list-details">
                     <span class="shortcut-list-name">${escapeHtml(en.name)}</span>
-                    <span class="shortcut-list-url">${escapeHtml(en.url)}（关键词会加在末尾）</span>
+                    <span class="shortcut-list-url">${escapeHtml(en.url)}${escapeHtml(I18N.t('custom.keywordAtEnd'))}</span>
                 </div>
             </div>
             <div class="shortcut-list-actions">
-                <button class="shortcut-action-btn use-engine" title="使用此引擎">
+                <button class="shortcut-action-btn use-engine" data-i18n-title="title.useEngine" title="${escapeHtml(I18N.t('title.useEngine'))}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                 </button>
-                <button class="shortcut-action-btn delete-engine" title="删除">
+                <button class="shortcut-action-btn delete-engine" data-i18n-title="common.delete" title="${escapeHtml(I18N.t('common.delete'))}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                 </button>
             </div>
@@ -796,7 +796,7 @@ function renderCustomEngines() {
             SettingsManager.set('searchEngine', id);
             updateSearchEngineUI(id);
             updateSearchEngineIndicator();
-            showToast('已切换引擎~');
+            showToast(I18N.t('toast.engineSwitched'));
         });
     });
 

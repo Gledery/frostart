@@ -9,15 +9,26 @@
 /* =========================================
    设置搜索
    ========================================= */
-const SETTINGS_TAB_LABELS = {
-    appearance: '外观',
-    clock: '时钟',
-    text: '文本',
-    wallpaper: '壁纸',
-    search: '搜索',
-    shortcuts: '图标',
-    data: '数据与关于'
-};
+/* 重建设置搜索索引（语言切换后需要重建，让标签/hint 用新语言重新入索引） */
+function rebuildSettingsSearchIndex() {
+    const drawer = document.getElementById('settings-drawer');
+    if (!drawer) return;
+    drawer.querySelectorAll('.setting-item').forEach(item => {
+        const label = (item.querySelector('.setting-label, .switch-row .setting-label, .color-input-wrapper .setting-label') || {}).textContent || '';
+        const hint = (item.querySelector('.setting-hint') || {}).textContent || '';
+        const section = item.closest('.settings-section');
+        const sectionTitle = section && section.querySelector('.section-title');
+        const sectionText = sectionTitle ? sectionTitle.textContent : '';
+        const panel = item.closest('.tab-panel');
+        const tabKey = panel ? 'tab.' + panel.dataset.panel : '';
+        let tabName = '';
+        if (tabKey) {
+            const v = I18N.t(tabKey);
+            tabName = v === tabKey ? '' : v;
+        }
+        item.dataset.searchText = (tabName + ' ' + sectionText + ' ' + label + ' ' + hint + ' ' + item.textContent).replace(/\s+/g, ' ').trim().toLowerCase();
+    });
+}
 
 function initSettingsSearch() {
     const input = document.getElementById('settings-search-input');
@@ -27,21 +38,11 @@ function initSettingsSearch() {
     if (!input || !wrap || !drawer) return;
 
     // 为每个 .setting-item 建立可搜索文本（标签 + hint + 所属 section + 所属标签页）
-    const items = Array.from(drawer.querySelectorAll('.setting-item'));
-    items.forEach(item => {
-        const label = (item.querySelector('.setting-label, .switch-row .setting-label, .color-input-wrapper .setting-label') || {}).textContent || '';
-        const hint = (item.querySelector('.setting-hint') || {}).textContent || '';
-        const section = item.closest('.settings-section');
-        const sectionTitle = section && section.querySelector('.section-title');
-        const sectionText = sectionTitle ? sectionTitle.textContent : '';
-        const panel = item.closest('.tab-panel');
-        const tabName = panel ? (SETTINGS_TAB_LABELS[panel.dataset.panel] || '') : '';
-        item.dataset.searchText = (tabName + ' ' + sectionText + ' ' + label + ' ' + hint + ' ' + item.textContent).replace(/\s+/g, ' ').trim().toLowerCase();
-    });
+    rebuildSettingsSearchIndex();
 
     function clearSearch() {
         drawer.classList.remove('settings-search-active');
-        items.forEach(i => {
+        drawer.querySelectorAll('.setting-item').forEach(i => {
             i.classList.remove('search-match', 'search-section-keep');
         });
         const empty = drawer.querySelector('.settings-search-empty');
@@ -52,6 +53,7 @@ function initSettingsSearch() {
         const q = raw.trim().toLowerCase();
         if (!q) { clearSearch(); return; }
 
+        const items = Array.from(drawer.querySelectorAll('.setting-item'));
         let matchedPanels = new Set();
         let matchCount = 0;
         items.forEach(item => {
@@ -91,10 +93,10 @@ function initSettingsSearch() {
             if (!empty) {
                 empty = document.createElement('div');
                 empty.className = 'settings-search-empty';
-                empty.textContent = `没有找到与"${raw.trim()}"相关的设置`;
+                empty.textContent = I18N.t('settings.noMatch', { q: raw.trim() });
                 content.appendChild(empty);
             } else {
-                empty.textContent = `没有找到与"${raw.trim()}"相关的设置`;
+                empty.textContent = I18N.t('settings.noMatch', { q: raw.trim() });
             }
         } else if (empty) {
             empty.remove();
@@ -260,14 +262,14 @@ function initContextMenu() {
             e.preventDefault();
             const id = parseInt(item.dataset.id);
             showContextMenu(e.clientX, e.clientY, [
-                { label: '编辑', icon: 'edit', action: () => openEditShortcutModal(id) },
-                { label: '在新标签打开', icon: 'external', action: () => openShortcut(item.dataset.url) },
+                { label: I18N.t('menu.edit'), icon: 'edit', action: () => openEditShortcutModal(id) },
+                { label: I18N.t('menu.openNewTab'), icon: 'external', action: () => openShortcut(item.dataset.url) },
                 { divider: true },
-                { label: '删除', icon: 'delete', danger: true, action: () => {
+                { label: I18N.t('common.delete'), icon: 'delete', danger: true, action: () => {
                     SettingsManager.removeShortcut(id);
                     renderShortcuts();
                     renderShortcutsList();
-                    showToast('已删除~');
+                    showToast(I18N.t('toast.deleted'));
                 }}
             ]);
         }
@@ -277,12 +279,8 @@ function initContextMenu() {
     document.querySelector('.search-box').addEventListener('contextmenu', (e) => {
         e.preventDefault();
         const pinnedKeys = getPinnedEngines();
-        const customList = SettingsManager.get('customEngines') || [];
         const engines = pinnedKeys.map(key => {
-            const builtIn = SEARCH_ENGINES[key];
-            if (builtIn) return { key, label: builtIn.label };
-            const c = customList.find(en => en.id === key);
-            return { key, label: c ? c.name : key };
+            return { key, label: getEngineLabel(key) };
         });
         const current = SettingsManager.get('searchEngine') || 'google';
         showContextMenu(e.clientX, e.clientY, engines.map(en => ({
@@ -304,22 +302,22 @@ function initContextMenu() {
         const timeText = document.getElementById('time').textContent;
 
         showContextMenu(e.clientX, e.clientY, [
-            { label: '复制时间', icon: 'copy', action: () => {
-                navigator.clipboard.writeText(timeText).then(() => showToast('已复制~'));
+            { label: I18N.t('menu.copyTime'), icon: 'copy', action: () => {
+                navigator.clipboard.writeText(timeText).then(() => showToast(I18N.t('toast.copied')));
             }},
             { divider: true },
-            { label: '24 小时制', icon: fmt === 24 ? 'check' : '', action: () => {
+            { label: I18N.t('menu.hours24'), icon: fmt === 24 ? 'check' : '', action: () => {
                 SettingsManager.set('timeFormat', 24);
                 updateTimeFormatUI(24);
                 updateTime();
             }},
-            { label: '12 小时制', icon: fmt === 12 ? 'check' : '', action: () => {
+            { label: I18N.t('menu.hours12'), icon: fmt === 12 ? 'check' : '', action: () => {
                 SettingsManager.set('timeFormat', 12);
                 updateTimeFormatUI(12);
                 updateTime();
             }},
             { divider: true },
-            { label: '显示秒', icon: showSec ? 'check' : '', action: () => {
+            { label: I18N.t('menu.showSeconds'), icon: showSec ? 'check' : '', action: () => {
                 const newVal = !showSec;
                 SettingsManager.set('showSeconds', newVal);
                 const cb = document.getElementById('show-seconds');
@@ -336,21 +334,21 @@ function initContextMenu() {
         const wpMode = SettingsManager.get('wallpaperMode') || 'gradient';
         const theme = SettingsManager.get('theme') || 'auto';
         showContextMenu(e.clientX, e.clientY, [
-            { label: '添加快捷方式', icon: 'add', action: () => {
+            { label: I18N.t('menu.addShortcut'), icon: 'add', action: () => {
                 document.getElementById('add-shortcut-btn').click();
             }},
             { divider: true },
-            { label: '设置', icon: 'settings', action: () => openSettings() },
-            { label: '外观设置', icon: 'palette', action: () => {
+            { label: I18N.t('menu.settings'), icon: 'settings', action: () => openSettings() },
+            { label: I18N.t('menu.appearance'), icon: 'palette', action: () => {
                 openSettings();
                 document.querySelector('[data-tab="appearance"]').click();
             }},
             { divider: true },
-            { label: '渐变壁纸', icon: wpMode === 'gradient' ? 'check' : '', action: () => switchWallpaperMode('gradient') },
-            { label: '图片壁纸', icon: wpMode === 'image' ? 'check' : '', action: () => switchWallpaperMode('image') },
-            { label: '纯色壁纸', icon: wpMode === 'solid' ? 'check' : '', action: () => switchWallpaperMode('solid') },
+            { label: I18N.t('menu.gradient'), icon: wpMode === 'gradient' ? 'check' : '', action: () => switchWallpaperMode('gradient') },
+            { label: I18N.t('menu.image'), icon: wpMode === 'image' ? 'check' : '', action: () => switchWallpaperMode('image') },
+            { label: I18N.t('menu.solid'), icon: wpMode === 'solid' ? 'check' : '', action: () => switchWallpaperMode('solid') },
             { divider: true },
-            { label: theme === 'light' ? '深色模式' : '浅色模式', icon: 'theme', action: () => {
+            { label: theme === 'light' ? I18N.t('menu.darkMode') : I18N.t('menu.lightMode'), icon: 'theme', action: () => {
                 const newTheme = theme === 'light' ? 'dark' : 'light';
                 SettingsManager.set('theme', newTheme);
                 applyTheme(newTheme);
@@ -599,17 +597,17 @@ function readIconFile(file, callback) {
                 const b64 = btoa(unescape(encodeURIComponent(text)));
                 callback(`data:image/svg+xml;base64,${b64}`, 'svg');
             } catch (err) {
-                showToast('SVG 文件解析失败', 'error');
+                showToast(I18N.t('toast.svgParseFailed'), 'error');
             }
         };
-        reader.onerror = () => showToast('读取文件失败', 'error');
+        reader.onerror = () => showToast(I18N.t('toast.readFailed'), 'error');
         reader.readAsText(file);
         return;
     }
 
     // 栅格图：维持 2MB 限制，压缩到 256px 提升清晰度
     if (file.size > 2 * 1024 * 1024) {
-        showToast('图标不能超过 2MB', 'error');
+        showToast(I18N.t('toast.icon2mb'), 'error');
         return;
     }
     compressImage(file, 256, 0.9, (dataUrl) => callback(dataUrl, 'raster'));

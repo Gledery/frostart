@@ -24,59 +24,8 @@ const KaomojiWidget = (function () {
         '(　´_ゝ`)', '( ˘ω˘ )', '(－ω－)'
     ];
 
-    const messagesEarly = [
-        '你在看我吗？',
-        '你发现我了！',
-        '你点到我了，恭喜',
-        '我在这待好久了...',
-        '今天也要加油啊awa',
-        '要不要去喝杯水',
-        '你能陪我一下吗',
-        '你是不是在摸鱼',
-        '我偷偷观察你很久了',
-        '你是怎么发现我的',
-        '我好像被你点醒了',
-        '嘿嘿，被你抓到了~',
-        '(*/ω\\*) 别...别一直盯着我看啦...',
-        '你好呀~今天过得怎么样？',
-        '你每点我一下，我就开心一点',
-        '偷偷告诉你，其实我很期待你来的',
-        '鸢说让我好好看着这个项目...',
-        '我在努力当一只合格的Kaomoji！',
-        '你的鼠标好好玩，我能碰一下吗',
-    ];
-    const messagesMid = [
-        '别点了别点了...',
-        '我只是一个无辜的颜文字',
-        '你是不是闲得慌',
-        '你的鼠标还好吗',
-        '我要被你点坏了',
-        '(´;ω;`) 头好晕...你点太快了',
-        '我也有脾气的！'
-    ];
-    const messagesLate = [
-        '再点一下试试',
-        '嗯...没有了，真的没有了',
-        '已经没有更多彩蛋了啊喂...？',
-        '好吧，你赢了',
-        '...（沉默）',
-        '我已经...什么都不想说了 (´;ω;`)',
-    ];
-
-    const idleMessages = [
-        '......zzZ', '好无聊啊......', '有人在吗？',
-        '（打了个哈欠）', '溜了溜了', '（发呆中）',
-        '要不要聊聊天', '（看风景）', '芜湖~♪',
-        '（开始数天花板上的格子）',
-        '有没有人呀...',
-        '趁没人注意偷偷蹦一下',
-        '（暗中观察）',
-        '嘿嘿嘿...没人在看吧？',
-        '（开始原地转圈圈）',
-        '无聊到想翻个跟头',
-        '（试图逃跑）',
-        '（假装自己是一朵蘑菇）',
-    ];
+    // 消息池不做模块级缓存：用时直接从 I18N.tArray 取，
+    // 这样运行中切换语言，下一条气泡就是新语言
     const idleFaces = [
         '(－ω－) zzZ', '(´-ω-`)', '(。_。)', '(￣ω￣)',
         '(・_・)', '(　´_ゝ`)', '(´・ω・`)', '( ˘ω˘ )'
@@ -112,7 +61,7 @@ const KaomojiWidget = (function () {
             // 因为 transition 设在 left 上，而 left:auto 无法被插值，会导致瞬间跳变（无动画）+ 闪回
             el.style.left = 'calc(100vw - 100px)';
             faceEl.textContent = '(＞ω＜)';
-            showBubble('嘿嘿，我跑到这边来了~', 3000);
+            showBubble(I18N.t('kaomoji.n1'), 3000);
             setTimeout(function () {
                 if (generation !== g) return;
                 el.style.left = '';
@@ -128,7 +77,7 @@ const KaomojiWidget = (function () {
             const g = generation;
             el.style.transition = 'bottom 0.5s ease';
             el.style.bottom = '-80px';
-            showBubble('我溜了......', 1500);
+            showBubble(I18N.t('kaomoji.n2a'), 1500);
             setTimeout(function () {
                 if (generation !== g) return;
                 hideBubble();
@@ -136,7 +85,7 @@ const KaomojiWidget = (function () {
                     if (generation !== g) return;
                     el.style.bottom = '';
                     faceEl.textContent = '(ﾟ∀ﾟ)';
-                    showBubble('我回来了！想我了吗', 2500);
+                    showBubble(I18N.t('kaomoji.n2b'), 2500);
                     setTimeout(function () {
                         if (generation !== g) return;
                         el.style.transition = '';
@@ -150,7 +99,7 @@ const KaomojiWidget = (function () {
             const g = generation;
             faceEl.style.transform = 'scaleX(-1)';
             faceEl.textContent = '(・ω・)';
-            showBubble('我反过来了......好玩', 3000);
+            showBubble(I18N.t('kaomoji.n3'), 3000);
             setTimeout(function () {
                 if (generation !== g) return;
                 faceEl.style.transform = '';
@@ -163,7 +112,7 @@ const KaomojiWidget = (function () {
             el.style.left = '50%';
             el.style.transform = 'translateX(-50%)';
             faceEl.textContent = '(ノ´▽`)ノ♪';
-            showBubble('我来视察一下中间地带', 3000);
+            showBubble(I18N.t('kaomoji.n4'), 3000);
             setTimeout(function () {
                 if (generation !== g) return;
                 el.style.left = '';
@@ -181,7 +130,7 @@ const KaomojiWidget = (function () {
             const spinFaces = ['(・ω・)', '(・∀・)', '(ﾟ∀ﾟ)', '(≧▽≦)', '(Ｔ▽Ｔ)'];
             let i = 0;
             faceEl.textContent = spinFaces[0];
-            showBubble('转转转......', 2000);
+            showBubble(I18N.t('kaomoji.n5'), 2000);
             const spinTimer = setInterval(function () {
                 if (generation !== g) { clearInterval(spinTimer); return; }
                 i++;
@@ -197,10 +146,6 @@ const KaomojiWidget = (function () {
     ];
 
     const wakeFace = '(ﾟ∀ﾟ)';
-    const wakeMessages = [
-        '来啦来啦！', '啊！你回来了！', '嗯？什么事？',
-        '我醒了！', '嗷！别吓我...', '你终于来了！'
-    ];
 
     function pickUnique(arr, last) {
         if (arr.length <= 1) return arr[0];
@@ -305,7 +250,7 @@ const KaomojiWidget = (function () {
             if (r < 0.35) {
                 lastFace = pickUnique(idleFaces, lastFace);
                 faceEl.textContent = lastFace;
-                lastMessage = pickUnique(idleMessages, lastMessage);
+                lastMessage = pickUnique(I18N.tArray('kaomoji.idle'), lastMessage);
                 showBubble(lastMessage, 3000);
             } else if (r < 0.5) {
                 stopIdleWiggle();
@@ -324,7 +269,7 @@ const KaomojiWidget = (function () {
 
         lastFace = pickUnique(idleFaces, lastFace);
         faceEl.textContent = lastFace;
-        lastMessage = pickUnique(idleMessages, lastMessage);
+        lastMessage = pickUnique(I18N.tArray('kaomoji.idle'), lastMessage);
         showBubble(lastMessage, 3500);
         startIdleWiggle();
 
@@ -339,7 +284,7 @@ const KaomojiWidget = (function () {
             wasIdle = false;
             clickCount++;
             faceEl.textContent = wakeFace;
-            const wakeMsg = pickUnique(wakeMessages, lastMessage);
+            const wakeMsg = pickUnique(I18N.tArray('kaomoji.wake'), lastMessage);
             pop();
             showBubble(wakeMsg);
             lastMessage = wakeMsg;
@@ -353,7 +298,12 @@ const KaomojiWidget = (function () {
 
         const stage = clickCount < 10 ? 0 : (clickCount < 24 ? 1 : 2);
         const facePool = getStagePool(facesEarly, facesMid, facesLate, stage);
-        const msgPool = getStagePool(messagesEarly, messagesMid, messagesLate, stage);
+        const msgPool = getStagePool(
+            I18N.tArray('kaomoji.early'),
+            I18N.tArray('kaomoji.mid'),
+            I18N.tArray('kaomoji.late'),
+            stage
+        );
 
         lastFace = pickUnique(facePool, lastFace);
         faceEl.textContent = lastFace;
@@ -381,7 +331,7 @@ const KaomojiWidget = (function () {
 
         el = document.createElement('div');
         el.className = 'corner-kaomoji';
-        el.setAttribute('aria-label', '点我玩');
+        el.setAttribute('aria-label', I18N.t('kaomoji.aria'));
         el.setAttribute('role', 'button');
         el.setAttribute('tabindex', '0');
         el.innerHTML = '<span class="face">' + defaultFace + '</span><span class="bubble"></span>';

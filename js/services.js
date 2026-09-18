@@ -240,12 +240,12 @@ async function refreshBingWallpaper(force) {
             applyWallpaper(SettingsManager.getAll());
         }
         if (typeof updateBingWallpaperInfo === 'function') updateBingWallpaperInfo();
-        if (force) showToast('必应壁纸已更新~');
+        if (force) showToast(I18N.t('toast.bingUpdated'));
     } catch (e) {
         if (!current.bingWallpaperUrl) {
-            showToast('必应壁纸加载失败，请检查网络', 'error');
+            showToast(I18N.t('toast.bingLoadFailed'), 'error');
         } else if (force) {
-            showToast('刷新失败，仍显示上次的壁纸', 'error');
+            showToast(I18N.t('toast.refreshFailed'), 'error');
         }
     }
 }
@@ -312,12 +312,13 @@ function updateTime() {
 
     const showWeek = SettingsManager.get('showWeek') !== false;
     const showLunar = SettingsManager.get('showLunar') || false;
-    const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${showWeek}-${showLunar}`;
+    // 缓存键带上当前语言，切换语言后日期/农历会按新语言重新格式化
+    const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${showWeek}-${showLunar}-${I18N.lang}`;
     if (dateKey !== _lastDateKey) {
         _lastDateKey = dateKey;
         let dateStr = showWeek
-            ? now.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-            : now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+            ? now.toLocaleDateString(I18N.locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+            : now.toLocaleDateString(I18N.locale, { year: 'numeric', month: 'long', day: 'numeric' });
         if (showLunar) {
             const lunar = getLunarDate(now);
             if (lunar) dateStr += ` · ${lunar}`;
@@ -334,9 +335,22 @@ const LUNAR_DAY_NAMES = ['初一', '初二', '初三', '初四', '初五', '初�
     '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
     '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
 
+/* 英文序数词：1st / 2nd / 3rd ...（11-13 一律 th） */
+function ordinalEn(n) {
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 13) return n + 'th';
+    switch (n % 10) {
+        case 1: return n + 'st';
+        case 2: return n + 'nd';
+        case 3: return n + 'rd';
+        default: return n + 'th';
+    }
+}
+
 let _lunarFmt = null;
 function getLunarDate(date) {
     try {
+        // 固定用 zh-CN 中国历格式化器提取月/日数字与闰月标记，输出语言再按界面语言组装
         if (!_lunarFmt) {
             _lunarFmt = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
                 month: 'numeric',
@@ -358,6 +372,9 @@ function getLunarDate(date) {
         }
         if (!monthNum || !dayNum) return null;
 
+        if (I18N.lang === 'en') {
+            return `${ordinalEn(dayNum)} day of the ${isLeap ? 'leap ' : ''}${ordinalEn(monthNum)} lunar month`;
+        }
         const monthName = LUNAR_MONTH_NAMES[monthNum - 1] || `${monthNum}月`;
         const dayName = LUNAR_DAY_NAMES[dayNum - 1] || `${dayNum}日`;
         return (isLeap ? '闰' : '') + monthName + dayName;

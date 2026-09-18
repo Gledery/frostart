@@ -32,6 +32,8 @@ const Packager = {
         'css/components.css',
         'css/pages.css',
         // 脚本
+        // i18n 必须最先加载：所有模块的动态文案都依赖 I18N，漏打包会导致全新安装崩溃
+        'js/i18n.js',
         // 工具函数库
         'js/utils/math-utils.js',
         'js/utils/string-utils.js',
@@ -94,14 +96,14 @@ const Packager = {
         // 在线网页（http/https）通过相对路径抓取，二者皆可。
         // 仅本地 file:// 直接打开时浏览器会拦截 fetch，读不到文件。
         if (location.protocol === 'file:') {
-            showToast('本地直接打开无法打包哦，请用在线网页版或已加载的扩展新标签页', 'error');
+            showToast(I18N.t('packager.localToast'), 'error');
             return;
         }
 
         const label = btn.querySelector('.pack-btn-label');
         const originalText = label ? label.textContent : '';
         btn.disabled = true;
-        if (label) label.textContent = '打包中…';
+        if (label) label.textContent = I18N.t('state.packaging');
 
         try {
             const entries = [];
@@ -116,9 +118,9 @@ const Packager = {
             }
             // manifest.json 是扩展的核心，缺失则包无效
             if (!entries.some(e => e.name === 'manifest.json')) {
-                throw new Error('无法读取 manifest.json');
+                throw new Error(I18N.t('packager.noManifest'));
             }
-            if (entries.length === 0) throw new Error('没有抓到任何文件');
+            if (entries.length === 0) throw new Error(I18N.t('packager.noFiles'));
 
             const zip = await buildZip(entries);
             const blob = new Blob([zip], { type: 'application/zip' });
@@ -132,11 +134,11 @@ const Packager = {
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-            const extra = fail ? `（${fail} 个文件跳过）` : '';
-            showToast(`安装包已生成~ 共 ${entries.length} 个文件${extra}`);
+            const extra = fail ? I18N.t('packager.filesSkipped', { n: fail }) : '';
+            showToast(I18N.t('toast.packageReady', { n: entries.length, extra }));
         } catch (e) {
             console.error('Packager error:', e);
-            showToast('打包失败了：' + (e.message || '未知错误'), 'error');
+            showToast(I18N.t('toast.packageFailed') + (e.message || I18N.t('toast.unknownError')), 'error');
         } finally {
             btn.disabled = false;
             if (label) label.textContent = originalText;

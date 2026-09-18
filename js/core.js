@@ -19,26 +19,40 @@ Frostart.state = {
 };
 
 // 搜索引擎配置（key 与 icons/search-engine/<key>.svg 一一对应）
+// label 为英文兜底名；中文界面的内置引擎名走 I18N 字典 engine.<key>，由 getEngineLabel 统一取
 const SEARCH_ENGINES = {
     google:        { url: 'https://www.google.com/search?q=',          label: 'Google' },
     bing:          { url: 'https://www.bing.com/search?q=',            label: 'Bing' },
-    baidu:         { url: 'https://www.baidu.com/s?wd=',               label: '百度' },
+    baidu:         { url: 'https://www.baidu.com/s?wd=',               label: 'Baidu' },
     duckduckgo:    { url: 'https://duckduckgo.com/?q=',                label: 'DuckDuckGo' },
-    sougou:        { url: 'https://www.sogou.com/web?query=',          label: '搜狗' },
+    sougou:        { url: 'https://www.sogou.com/web?query=',          label: 'Sogou' },
     yahoo:         { url: 'https://search.yahoo.com/search?p=',        label: 'Yahoo' },
-    bilibili:      { url: 'https://search.bilibili.com/all?keyword=',  label: '哔哩哔哩' },
+    bilibili:      { url: 'https://search.bilibili.com/all?keyword=',  label: 'Bilibili' },
     youtube:       { url: 'https://www.youtube.com/results?search_query=', label: 'YouTube' },
-    zhihu:         { url: 'https://www.zhihu.com/search?q=',           label: '知乎' },
-    weibo:         { url: 'https://s.weibo.com/weibo?q=',              label: '微博' },
-    douban:        { url: 'https://www.douban.com/search?q=',          label: '豆瓣' },
-    xiaohongshu:   { url: 'https://www.xiaohongshu.com/search_result?keyword=', label: '小红书' },
-    douyin:        { url: 'https://www.douyin.com/search/',            label: '抖音' },
-    toutiao:       { url: 'https://so.toutiao.com/search?keyword=',    label: '今日头条' },
-    taobao:        { url: 'https://s.taobao.com/search?q=',            label: '淘宝' },
-    jd:            { url: 'https://search.jd.com/Search?keyword=',     label: '京东' },
+    zhihu:         { url: 'https://www.zhihu.com/search?q=',           label: 'Zhihu' },
+    weibo:         { url: 'https://s.weibo.com/weibo?q=',              label: 'Weibo' },
+    douban:        { url: 'https://www.douban.com/search?q=',          label: 'Douban' },
+    xiaohongshu:   { url: 'https://www.xiaohongshu.com/search_result?keyword=', label: 'Xiaohongshu' },
+    douyin:        { url: 'https://www.douyin.com/search/',            label: 'Douyin' },
+    toutiao:       { url: 'https://so.toutiao.com/search?keyword=',    label: 'Toutiao' },
+    taobao:        { url: 'https://s.taobao.com/search?q=',            label: 'Taobao' },
+    jd:            { url: 'https://search.jd.com/Search?keyword=',     label: 'JD' },
     github:        { url: 'https://github.com/search?q=',              label: 'GitHub' },
-    googlescholar: { url: 'https://scholar.google.com/scholar?q=',     label: 'Google 学术' }
+    googlescholar: { url: 'https://scholar.google.com/scholar?q=',     label: 'Google Scholar' }
 };
+
+/* 取引擎显示名：内置引擎走 I18N（engine.<key> 有字典时用译文），
+   自定义引擎用用户命名，找不到时回退 key */
+function getEngineLabel(key) {
+    const builtIn = SEARCH_ENGINES[key];
+    if (builtIn) {
+        const dictKey = 'engine.' + key;
+        const localized = I18N.t(dictKey);
+        return localized === dictKey ? builtIn.label : localized;
+    }
+    const c = getCustomEngine(key);
+    return c ? c.name : key;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 同步从 localStorage 读取缓存的设置，抢先应用 CSS 变量（消除首屏闪烁）
@@ -76,6 +90,7 @@ function initializeApp() {
         document.body.classList.remove('wp-instant');
     });
     initAccentPicker();
+    initLanguage();
     initKaomojiToggle();
     initTime();
     initTimeFormat();
@@ -159,6 +174,7 @@ function applySettings() {
     updateTimeFormatUI(settings.timeFormat);
     updateFontPresets(settings.customFont);
     updateClockFontPresets(settings.clockFont);
+    syncLanguageUI();
 }
 
 /* =========================================
@@ -267,6 +283,43 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 });
 
 /* =========================================
+   语言（界面国际化）
+   ========================================= */
+/* 同步语言选项按钮选中态（初始化 / 导入 / 重置后通用） */
+function syncLanguageUI() {
+    const lang = SettingsManager.get('lang') || 'auto';
+    document.querySelectorAll('[data-lang-option]').forEach(b => {
+        b.classList.toggle('active', b.dataset.langOption === lang);
+    });
+}
+
+function initLanguage() {
+    syncLanguageUI();
+    document.querySelectorAll('[data-lang-option]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const lang = btn.dataset.langOption;
+            SettingsManager.set('lang', lang);
+            document.querySelectorAll('[data-lang-option]').forEach(b => {
+                b.classList.toggle('active', b.dataset.langOption === lang);
+            });
+            applyLanguageChange();
+        });
+    });
+}
+
+/* 切换语言后：刷新 I18N 当前语言、静态文案与所有动态生成的 UI */
+function applyLanguageChange() {
+    I18N.setLang(SettingsManager.get('lang') || 'auto');
+    applySettings();           // 滑块文字、壁纸面板、引擎网格等
+    if (typeof renderShortcutsList === 'function') renderShortcutsList();
+    if (typeof renderCustomEngines === 'function') renderCustomEngines();
+    if (typeof renderEnginePopup === 'function') renderEnginePopup();
+    if (typeof rebuildSettingsSearchIndex === 'function') rebuildSettingsSearchIndex();
+    if (typeof updateTime === 'function') updateTime();
+    if (typeof updateButtonState === 'function') updateButtonState(SettingsManager.VERSION);
+}
+
+/* =========================================
    时间
    ========================================= */
 function initTime() {
@@ -333,9 +386,9 @@ function updateSearchEngineIndicator() {
     const indicator = document.getElementById('search-engine-indicator');
     if (!indicator) return;
 
-    const config = getEngineConfig(engine);
-    indicator.innerHTML = renderEngineIconHtml(engine, 28, config.label);
-    indicator.title = config.label;
+    const engineLabel = getEngineLabel(engine);
+    indicator.innerHTML = renderEngineIconHtml(engine, 28, engineLabel);
+    indicator.title = engineLabel;
 }
 
 function getEngineIconFile(engine) {
@@ -361,7 +414,7 @@ function renderEngineIconHtml(engineKey, size, fallbackText) {
         const ch = (custom.name || '?').charAt(0).toUpperCase();
         return `<span style="font-size:${Math.round(size * 0.5)}px;font-weight:600;color:var(--text-primary);">${escapeHtml(ch)}</span>`;
     }
-    const label = SEARCH_ENGINES[engineKey] ? SEARCH_ENGINES[engineKey].label : (fallbackText || engineKey);
+    const label = SEARCH_ENGINES[engineKey] ? getEngineLabel(engineKey) : (fallbackText || engineKey);
     return `<img src="icons/search-engine/${getEngineIconFile(engineKey)}" alt="${escapeHtml(label)}" style="width:${size}px;height:${size}px;object-fit:contain;">`;
 }
 
@@ -420,13 +473,13 @@ function renderEnginePopup() {
     const customList = SettingsManager.get('customEngines') || [];
     const engines = visibleKeys.map(key => {
         const builtIn = SEARCH_ENGINES[key];
-        if (builtIn) return { key, label: builtIn.label, custom: false };
+        if (builtIn) return { key, label: getEngineLabel(key), custom: false };
         const c = customList.find(e => e.id === key);
         return { key, label: c ? c.name : key, custom: true };
     });
 
     if (engines.length === 0) {
-        popup.innerHTML = `<div class="engine-popup-empty">未选择引擎<br><span>在设置 → 搜索中添加</span></div>`;
+        popup.innerHTML = `<div class="engine-popup-empty">${escapeHtml(I18N.t('popup.noEngine'))}<br><span>${escapeHtml(I18N.t('popup.addInSettings'))}</span></div>`;
         return;
     }
 
@@ -551,7 +604,7 @@ function renderShortcutsList() {
     const shortcuts = SettingsManager.get('shortcuts') || [];
 
     if (shortcuts.length === 0) {
-        list.innerHTML = '<div class="setting-hint" style="text-align:center;padding:16px;">还没有快捷方式</div>';
+        list.innerHTML = `<div class="setting-hint" style="text-align:center;padding:16px;">${escapeHtml(I18N.t('shortcuts.empty'))}</div>`;
         return;
     }
 
@@ -567,13 +620,13 @@ function renderShortcutsList() {
                 </div>
             </div>
             <div class="shortcut-list-actions">
-                <button class="shortcut-action-btn edit-shortcut" aria-label="编辑" title="编辑">
+                <button class="shortcut-action-btn edit-shortcut" aria-label="${escapeHtml(I18N.t('common.edit'))}" title="${escapeHtml(I18N.t('common.edit'))}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                 </button>
-                <button class="shortcut-action-btn delete-shortcut" aria-label="删除" title="删除">
+                <button class="shortcut-action-btn delete-shortcut" aria-label="${escapeHtml(I18N.t('common.delete'))}" title="${escapeHtml(I18N.t('common.delete'))}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -695,7 +748,7 @@ function initModal() {
     addBtn.addEventListener('click', () => {
         Frostart.state.editingShortcutId = null;
         Frostart.state.pendingIconStyle = null;
-        document.getElementById('modal-title').textContent = '添加快捷方式';
+        document.getElementById('modal-title').textContent = I18N.t('modal.addShortcut');
         document.getElementById('shortcut-name').value = '';
         document.getElementById('shortcut-url').value = '';
         document.getElementById('shortcut-icon').value = '';
@@ -768,7 +821,7 @@ function openEditShortcutModal(id) {
 
     Frostart.state.editingShortcutId = id;
     Frostart.state.pendingIconStyle = shortcut.iconStyle || null;
-    document.getElementById('modal-title').textContent = '编辑快捷方式';
+    document.getElementById('modal-title').textContent = I18N.t('modal.editShortcut');
     document.getElementById('shortcut-name').value = shortcut.name;
     document.getElementById('shortcut-url').value = shortcut.url;
     document.getElementById('shortcut-icon').value = shortcut.icon || '';
@@ -787,7 +840,7 @@ function saveShortcut() {
     const icon = document.getElementById('shortcut-icon').value.trim();
 
     if (!name || !url) {
-        alert('请填写名称和网址');
+        alert(I18N.t('alert.fillNameUrl'));
         return;
     }
 
@@ -800,7 +853,7 @@ function saveShortcut() {
     try {
         new URL(finalUrl);
     } catch (e) {
-        alert('网址格式不太对w');
+        alert(I18N.t('alert.urlBadFormat'));
         return;
     }
 
@@ -948,7 +1001,7 @@ function initDataManagement() {
 
     document.getElementById('export-btn').addEventListener('click', () => {
         SettingsManager.export();
-        showToast('配置已导出~');
+        showToast(I18N.t('toast.exported'));
     });
 
     const importFile = document.getElementById('import-file');
@@ -967,7 +1020,7 @@ function initDataManagement() {
                 renderCustomEngines();
                 applyTheme(SettingsManager.get('theme'));
                 syncThemeUI();
-                showToast('配置导入成功');
+                showToast(I18N.t('toast.imported'));
             } catch (err) {
                 showToast(err.message, 'error');
             }
@@ -1098,7 +1151,7 @@ async function checkForUpdates(manual) {
     const btnLabel = document.getElementById('check-update-label');
     if (manual && btn) {
         btn.disabled = true;
-        if (btnLabel) btnLabel.textContent = '检查中…';
+        if (btnLabel) btnLabel.textContent = I18N.t('state.checking');
     }
 
     try {
@@ -1135,15 +1188,15 @@ async function checkForUpdates(manual) {
 
         if (manual) {
             if (latestVersion && compareVersions(latestVersion, currentVersion) > 0) {
-                showToast(`发现新版本 v${latestVersion}！点击按钮前往下载`);
+                showToast(I18N.t('toast.newVersion', { v: latestVersion }));
             } else {
-                showToast('当前已是最新版本~');
+                showToast(I18N.t('toast.upToDate'));
             }
         }
 
         updateButtonState(currentVersion, latestVersion);
     } catch (e) {
-        if (manual) showToast('检查更新失败，可能是网络问题', 'error');
+        if (manual) showToast(I18N.t('toast.updateFailed'), 'error');
         updateButtonState(currentVersion);
     } finally {
         if (manual && btn) {
@@ -1165,11 +1218,11 @@ function updateButtonState(currentVersion, latestVersion) {
     }
 
     if (latestVersion && compareVersions(latestVersion, currentVersion) > 0) {
-        label.textContent = `v${latestVersion} 可更新`;
+        label.textContent = I18N.t('toast.updateAvailable', { v: latestVersion });
         btn.classList.add('has-update');
         if (settingsBtn) settingsBtn.classList.add('has-update');
     } else {
-        label.textContent = '检查更新';
+        label.textContent = I18N.t('data.checkUpdate');
         btn.classList.remove('has-update');
         if (settingsBtn) settingsBtn.classList.remove('has-update');
     }
