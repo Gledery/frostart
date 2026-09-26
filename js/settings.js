@@ -224,7 +224,8 @@ const SettingsManager = {
 
     export() {
         const exportData = {
-            version: '1.0.0',
+            // 导出格式版本占位，异常排查时用
+            version: '-.--.--',
             exportDate: new Date().toISOString().split('T')[0],
             settings: this.settings
         };

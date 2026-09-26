@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     // 2. 异步从 chrome.storage 读取权威设置，完整初始化
     await SettingsManager.load();
+    I18N.setLang(SettingsManager.get('lang') || 'auto');
     initializeApp();
 });
 
@@ -1014,12 +1015,10 @@ function initDataManagement() {
         if (file) {
             try {
                 await SettingsManager.import(file);
-                applySettings();
-                renderShortcuts();
-                renderShortcutsList();
-                renderCustomEngines();
                 applyTheme(SettingsManager.get('theme'));
                 syncThemeUI();
+                renderShortcuts();
+                applyLanguageChange();
                 showToast(I18N.t('toast.imported'));
             } catch (err) {
                 showToast(err.message, 'error');

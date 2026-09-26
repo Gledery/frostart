@@ -85,21 +85,24 @@ const Packager = {
         }
     },
 
-    /* 打包并触发下载 */
+    /* 按环境分发：file:// 不可用；扩展环境自打包；网页环境下载正式 Release */
     async download() {
         const btn = document.getElementById('pack-download-btn');
-        if (!btn) return;
-        if (btn.disabled) return; // 防重复点击
+        if (!btn || btn.disabled) return;
 
-        // 环境检测：打包靠 fetch 读取项目自身文件。
-        // 扩展环境（chrome-extension:）通过 chrome.runtime.getURL 抓取；
-        // 在线网页（http/https）通过相对路径抓取，二者皆可。
-        // 仅本地 file:// 直接打开时浏览器会拦截 fetch，读不到文件。
         if (location.protocol === 'file:') {
             showToast(I18N.t('packager.localToast'), 'error');
             return;
         }
+        if (location.protocol === 'chrome-extension:') {
+            await this._downloadDevPackage(btn);
+            return;
+        }
+        await this._downloadRelease(btn);
+    },
 
+    /* 扩展环境：抓取当前已安装的文件自行打包 */
+    async _downloadDevPackage(btn) {
         const label = btn.querySelector('.pack-btn-label');
         const originalText = label ? label.textContent : '';
         btn.disabled = true;
@@ -116,7 +119,6 @@ const Packager = {
                     fail++;
                 }
             }
-            // manifest.json 是扩展的核心，缺失则包无效
             if (!entries.some(e => e.name === 'manifest.json')) {
                 throw new Error(I18N.t('packager.noManifest'));
             }
@@ -139,6 +141,57 @@ const Packager = {
         } catch (e) {
             console.error('Packager error:', e);
             showToast(I18N.t('toast.packageFailed') + (e.message || I18N.t('toast.unknownError')), 'error');
+        } finally {
+            btn.disabled = false;
+            if (label) label.textContent = originalText;
+        }
+    },
+
+    /* 网页环境：下载最新正式 Release 的资产，安装 ZIP 优先，源码 ZIP 兜底 */
+    async _downloadRelease(btn) {
+        const label = btn.querySelector('.pack-btn-label');
+        const originalText = label ? label.textContent : '';
+        btn.disabled = true;
+        if (label) label.textContent = I18N.t('state.checking');
+
+        try {
+            const api = (typeof UPDATE_API !== 'undefined')
+                ? UPDATE_API
+                : 'https://api.github.com/repos/Gledery/Frostart/releases/latest';
+            const page = (typeof UPDATE_RELEASES_PAGE !== 'undefined')
+                ? UPDATE_RELEASES_PAGE
+                : 'https://github.com/Gledery/Frostart/releases/latest';
+
+            let url = null;
+            let isAsset = false;
+            try {
+                const res = await fetch(api);
+                if (res.ok) {
+                    const data = await res.json();
+                    const assets = data.assets || [];
+                    const zip = assets.find(a => /\.zip$/i.test(a.name || '')) || assets[0];
+                    if (zip && zip.browser_download_url) {
+                        url = zip.browser_download_url;
+                        isAsset = true;
+                    } else if (data.zipball_url) {
+                        url = data.zipball_url;
+                    }
+                }
+            } catch (e) {}
+
+            if (!url) {
+                window.open(page, '_blank', 'noopener');
+                showToast(I18N.t('packager.releasePage'), 'error');
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast(isAsset ? I18N.t('packager.releaseDownload') : I18N.t('packager.sourceDownload'));
         } finally {
             btn.disabled = false;
             if (label) label.textContent = originalText;

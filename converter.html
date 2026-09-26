@@ -646,6 +646,9 @@ function writeFrostartSettings(settings) {
                 frostartSettings: settings,
                 frostartSettings_backup: settings
             }, () => resolve());
+            try {
+                localStorage.setItem('frostartSettings', JSON.stringify(settings));
+            } catch (e) { /* 忽略 */ }
         } else {
             try {
                 localStorage.setItem('frostartSettings', JSON.stringify(settings));

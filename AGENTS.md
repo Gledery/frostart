@@ -32,6 +32,7 @@
 - **配置存储走 `chrome.storage.local`**：键名 `frostartSettings`（见 [settings.js](./js/settings.js)）。为了消除首屏 FOUC，会同步从 `localStorage` 读一份缓存抢先应用 CSS 变量（[core.js](./js/core.js) `DOMContentLoaded` 前 30 行）。改存储结构时两层都要兼容，否则用户配置会丢或闪
 - **壁纸颜色变量是 `@property` 注册的类型化属性**：`--wp-c1` / `--wp-c2` / `--wp-angle` / `--wp-solid` / `--blob-*` 都在 [tokens.css](./css/tokens.css) 用 `@property` 声明了 `<color>` / `<angle>` 类型，**这是壁纸切换能平滑过渡的前提**。不要把它们改成普通 `--var`，否则颜色变化会突变
 - **MV3 service worker 不稳定**：不要依赖持久后台任务，时钟已经做了"标签页隐藏时暂停"（`0.1.13`），新增定时器类逻辑要考虑页面随时可能被冻结
+- **面向用户的下载入口只分发最新正式 Release 的资产**：网页版的"下载安装包"走 GitHub Releases（手动上传的安装 ZIP 优先，自动生成的源码 ZIP 兜底），禁止把工作树或部署目录里的文件自行打包后发给用户；扩展环境的自打包仅限开发者本地使用
 
 ---
 
@@ -40,6 +41,8 @@
 - **全局状态收拢在命名空间**：可变状态走 `Frostart.state.xxx`（[core.js](./js/core.js) 顶部）和 `WidgetState`，**不要新增裸 `let` 全局变量**。这条在 `0.1.13` 重构过，目的是降低重名风险
 - **项目正在逐步模块化**：目前各模块共享全局作用域（非 ES Module）。小型低风险改动可直接提 PR；**涉及整体架构（IIFE 隔离、循环依赖重构、ES Module 迁移）必须先在 Issue 讨论达成共识**，否则容易和维护者正在做的迭代冲突导致一边作废
 - **文件头必须有职责注释块**：每个 JS 模块顶部写明「文件名 — 一句话职责 / 职责列举 / 加载顺序」，格式见 [core.js](./js/core.js) 第 1-10 行。CSS 文件同样要有分层说明（见 [base.css](./css/base.css) / [components.css](./css/components.css) 头部）
+- **新增设置项必须全链路自查**：默认值、启动时与 `chrome.storage.local` 权威值对账（localStorage 缓存可能缺失或过期）、导出、导入、重置、converter 读写都要覆盖；converter 对存储的读写必须与 SettingsManager 的行为保持一致（键名、双写、localStorage 镜像）
+- **改完不写"修改说明"**：不要用注释或界面文本强调本次改了什么、为什么改，正常的职责性注释照常写
 
 ---
 
