@@ -982,7 +982,15 @@ const I18N = (function () {
 
     const DICTS = { zh, en };
 
-    /* 语言判定：设置项显式指定优先（同步预读 localStorage），否则跟随浏览器 */
+    /* 浏览器语言判定：zh 前缀视为中文，其余回退英文 */
+    function detectBrowserLang() {
+        const navLang = (navigator.language || 'zh').toLowerCase();
+        return navLang.indexOf('zh') === 0 ? 'zh' : 'en';
+    }
+
+    /* 首屏语言判定：设置项显式指定优先（同步预读 localStorage），否则跟随浏览器。
+       仅用于启动时——运行时切到 auto 不能走这里：设置保存有防抖，localStorage 镜像
+       可能还停留在上一次的显式语言，会导致"自动"解析成旧语言而非浏览器语言 */
     function detectLang() {
         try {
             const raw = localStorage.getItem(SETTINGS_KEY);
@@ -991,8 +999,7 @@ const I18N = (function () {
                 if (s && (s.lang === 'zh' || s.lang === 'en')) return s.lang;
             }
         } catch (e) { /* 缓存不可读则走浏览器语言 */ }
-        const navLang = (navigator.language || 'zh').toLowerCase();
-        return navLang.indexOf('zh') === 0 ? 'zh' : 'en';
+        return detectBrowserLang();
     }
 
     let currentLang = detectLang();
@@ -1064,10 +1071,11 @@ const I18N = (function () {
         finish();
     }
 
-    /* 运行时切换语言：lang 传 'zh'/'en' 显式指定，'auto' 或空则重新跟随浏览器。
+    /* 运行时切换语言：lang 传 'zh'/'en' 显式指定，'auto' 或空则直接跟随浏览器
+       （不能读 localStorage 镜像，设置保存有防抖，镜像可能还是旧的显式语言）。
        切换后同步 <html lang> 并重刷静态文案；动态生成的 UI 由各模块自行重渲染 */
     function setLang(lang) {
-        currentLang = (lang === 'zh' || lang === 'en') ? lang : detectLang();
+        currentLang = (lang === 'zh' || lang === 'en') ? lang : detectBrowserLang();
         document.documentElement.setAttribute('lang', currentLang === 'zh' ? 'zh-CN' : 'en');
         applyToDom(document);
         return currentLang;
