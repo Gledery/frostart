@@ -192,8 +192,25 @@ function initWallpaperSettings() {
             SettingsManager.set('gradientAngle', angle);
             applyWallpaper(SettingsManager.getAll());
             updateBlobIndicators();
+
+            // 联动主题色：把第二个光斑的实际颜色同步为主题色
+            if (SettingsManager.get('linkAccentToBlob')) {
+                const linkedColor = getEffectiveBlobHex(2);
+                SettingsManager.set('accentColor', linkedColor);
+                applyAccentColor(linkedColor);
+                syncAccentPickerUI(linkedColor);
+            }
         });
     });
+
+    // 联动主题色开关
+    const accentLinkToggle = document.getElementById('accent-link-toggle');
+    if (accentLinkToggle) {
+        accentLinkToggle.checked = !!SettingsManager.get('linkAccentToBlob');
+        accentLinkToggle.addEventListener('change', () => {
+            SettingsManager.set('linkAccentToBlob', accentLinkToggle.checked);
+        });
+    }
 
     // 光斑颜色（跟随渐变开关：开=自动派生，关=自定义）
     const blob1 = document.getElementById('blob-color-1');
@@ -330,8 +347,12 @@ function updateWallpaperUI(settings) {
     const colorPicker = document.getElementById('wallpaper-color');
     if (colorPicker) colorPicker.value = settings.wallpaperColor || '#e6eef7';
 
+    // 联动主题色开关
+    const accentLinkToggle = document.getElementById('accent-link-toggle');
+    if (accentLinkToggle) accentLinkToggle.checked = !!settings.linkAccentToBlob;
+
     // 渐变颜色
-    const gc1 = document.getElementById('gradient-color-1');
+    const gc1 = document.getElementById('gradient-color1');
     if (gc1) gc1.value = settings.gradientColor1 || '#e8eef7';
     const gc2 = document.getElementById('gradient-color-2');
     if (gc2) gc2.value = settings.gradientColor2 || '#dde6f5';

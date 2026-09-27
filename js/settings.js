@@ -61,6 +61,7 @@ const SettingsManager = {
         // 光斑颜色：空字符串=跟随渐变/壁纸自动派生（保持 PhasWer 风格），非空则使用自定义色
         blobColor1: '',
         blobColor2: '',
+        linkAccentToBlob: false,
         searchEngine: 'google',
         // 已加入搜索框快捷切换的引擎 key 列表（仅这些会出现在 engine-popup 里）
         pinnedEngines: ['google', 'bing', 'baidu', 'duckduckgo'],

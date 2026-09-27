@@ -211,8 +211,9 @@ function applyAccentColor(color) {
     }
 }
 
-/* 主题色选择器：预设色板 + 自定义拾色器 + 恢复默认 */
-function initAccentPicker() {
+/* 同步主题色选择器选中态：哪个控件对应当前 accentColor。
+   color 缺省时读取设置，可在初始化 / 外部联动 / 导入后重复调用 */
+function syncAccentPickerUI(color) {
     const picker = document.getElementById('accent-picker');
     if (!picker) return;
     const swatches = picker.querySelectorAll('.accent-swatch');
@@ -220,24 +221,30 @@ function initAccentPicker() {
     const customLabel = picker.querySelector('.accent-custom');
     const resetBtn = document.getElementById('accent-reset-btn');
 
-    // 同步选中态：哪个控件对应当前 accentColor
-    function syncActiveState(color) {
-        const current = (color || '').toLowerCase();
-        swatches.forEach(sw => {
-            sw.classList.toggle('active', sw.dataset.color.toLowerCase() === current);
-        });
-        // 自定义激活：当前色不在预设里，且非空
-        const isPreset = Array.from(swatches).some(sw => sw.dataset.color.toLowerCase() === current);
-        customLabel.classList.toggle('active', !!current && !isPreset);
-        resetBtn.classList.toggle('active', !current);
-        if (current) customInput.value = current;
-    }
+    const current = (color != null ? color : SettingsManager.get('accentColor') || '').toLowerCase();
+    swatches.forEach(sw => {
+        sw.classList.toggle('active', sw.dataset.color.toLowerCase() === current);
+    });
+    // 自定义激活：当前色不在预设里，且非空
+    const isPreset = Array.from(swatches).some(sw => sw.dataset.color.toLowerCase() === current);
+    customLabel.classList.toggle('active', !!current && !isPreset);
+    resetBtn.classList.toggle('active', !current);
+    if (current) customInput.value = current;
+}
+
+/* 主题色选择器：预设色板 + 自定义拾色器 + 恢复默认 */
+function initAccentPicker() {
+    const picker = document.getElementById('accent-picker');
+    if (!picker) return;
+    const swatches = picker.querySelectorAll('.accent-swatch');
+    const customInput = document.getElementById('accent-color-input');
+    const resetBtn = document.getElementById('accent-reset-btn');
 
     // 设置并保存
     function setAccent(color) {
         SettingsManager.set('accentColor', color);
         applyAccentColor(color);
-        syncActiveState(color);
+        syncAccentPickerUI(color);
     }
 
     swatches.forEach(sw => {
@@ -249,7 +256,7 @@ function initAccentPicker() {
     resetBtn.addEventListener('click', () => setAccent(''));
 
     // 初始化选中态
-    syncActiveState(SettingsManager.get('accentColor'));
+    syncAccentPickerUI();
 }
 
 /* 角落颜文字开关：读取设置决定 init/destroy，并绑定开关实时响应 */
