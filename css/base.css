@@ -147,11 +147,7 @@ input {
     content: '';
     position: absolute;
     border-radius: 50%;
-    will-change: transform;
-    animation: blob-float 22s ease-in-out infinite;
-    transform: translate3d(-50%, -50%, 0);
-    backface-visibility: hidden;
-    perspective: 1000px;
+    transform: translate3d(-50%, -50%, 0) scale(0.7);
 }
 
 .wallpaper-layer::before {
@@ -176,17 +172,12 @@ input {
     background: radial-gradient(circle, var(--blob-c2-strong, rgba(171,138,255,0.5)) 0%, transparent 65%);
     top: 32%;
     left: 52%;
-    animation-delay: -7s;
 }
 
 .wallpaper-layer .blob {
     position: absolute;
     border-radius: 50%;
-    will-change: transform;
-    animation: blob-float 22s ease-in-out infinite;
-    transform: translate3d(-50%, -50%, 0);
-    backface-visibility: hidden;
-    perspective: 1000px;
+    transform: translate3d(-50%, -50%, 0) scale(0.7);
 }
 
 .wallpaper-layer .blob-1 {
@@ -195,7 +186,6 @@ input {
     background: radial-gradient(circle, var(--blob-c1-soft, rgba(100,194,220,0.38)) 0%, transparent 60%);
     top: 25%;
     left: 45%;
-    animation-delay: -3s;
     transition: --blob-c1-soft var(--time-slow) ease;
 }
 
@@ -205,23 +195,7 @@ input {
     background: radial-gradient(circle, var(--blob-c2-soft, rgba(140,200,255,0.38)) 0%, transparent 60%);
     top: 30%;
     left: 55%;
-    animation-delay: -14s;
     transition: --blob-c2-soft var(--time-slow) ease;
-}
-
-@keyframes blob-float {
-    0%, 100% {
-        transform: translate3d(-50%, -50%, 0) scale(0.7) rotate(0deg);
-    }
-    25% {
-        transform: translate3d(-45%, -55%, 0) scale(0.8) rotate(8deg);
-    }
-    50% {
-        transform: translate3d(-55%, -45%, 0) scale(0.75) rotate(-6deg);
-    }
-    75% {
-        transform: translate3d(-48%, -52%, 0) scale(0.85) rotate(4deg);
-    }
 }
 
 /* 壁纸系统：图片层 */
