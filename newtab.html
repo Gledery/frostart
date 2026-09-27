@@ -357,32 +357,13 @@
                     <!-- 渐变壁纸 -->
                     <div class="wallpaper-type-block" data-type="gradient">
                         <div class="wallpaper-type-header">
-                            <span class="setting-label" data-i18n="wp.gradient">🎨 渐变壁纸</span>
+                            <span class="setting-label" data-i18n="wp.gradient">渐变壁纸</span>
                             <label class="switch">
                                 <input type="checkbox" id="wp-gradient-toggle">
                                 <span class="switch-slider"></span>
                             </label>
                         </div>
                         <div class="wallpaper-type-content" id="wp-gradient-content">
-                            <div class="setting-item">
-                                <label class="setting-label" data-i18n="wp.gradientColor1">渐变颜色 1</label>
-                                <div class="color-input-wrapper">
-                                    <input type="color" id="gradient-color-1" class="color-picker" value="#e8eef7" data-i18n-aria="wp.gradientColor1" aria-label="渐变颜色1">
-                                </div>
-                            </div>
-                            <div class="setting-item">
-                                <label class="setting-label" data-i18n="wp.gradientColor2">渐变颜色 2</label>
-                                <div class="color-input-wrapper">
-                                    <input type="color" id="gradient-color-2" class="color-picker" value="#dde6f5" data-i18n-aria="wp.gradientColor2" aria-label="渐变颜色2">
-                                </div>
-                            </div>
-                            <div class="setting-item">
-                                <label class="setting-label" data-i18n="wp.gradientAngle">渐变角度</label>
-                                <div class="slider-container">
-                                    <input type="range" id="gradient-angle-slider" class="slider" min="0" max="360" value="135">
-                                    <span class="slider-value" id="gradient-angle-value">135°</span>
-                                </div>
-                            </div>
                             <div class="setting-item">
                                 <label class="setting-label" data-i18n="wp.gradientPresets">渐变预设</label>
                                 <div class="gradient-presets">
@@ -414,6 +395,20 @@
                                 <div class="setting-hint" data-i18n="wp.blobHint">开启后光斑颜色自动跟随渐变背景；关闭后可自定义</div>
                             </div>
                             <div class="setting-item">
+                                <label class="setting-label" data-i18n="wp.bgColor">背景颜色</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="gradient-color-1" class="color-picker" value="#e8eef7" data-i18n-aria="wp.gradientColor1" aria-label="渐变颜色1">
+                                    <input type="color" id="gradient-color-2" class="color-picker" value="#dde6f5" data-i18n-aria="wp.gradientColor2" aria-label="渐变颜色2">
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label" data-i18n="wp.gradientAngle">渐变角度</label>
+                                <div class="slider-container">
+                                    <input type="range" id="gradient-angle-slider" class="slider" min="0" max="360" value="135">
+                                    <span class="slider-value" id="gradient-angle-value">135°</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
                                 <button class="data-btn" id="gradient-reset-btn" type="button" style="width:100%;" data-i18n="wp.resetGradient">
                                     恢复默认渐变
                                 </button>
@@ -424,7 +419,7 @@
                     <!-- 必应每日壁纸 -->
                     <div class="wallpaper-type-block" data-type="bing">
                         <div class="wallpaper-type-header">
-                            <span class="setting-label" data-i18n="wp.bing">🌐 必应每日壁纸</span>
+                            <span class="setting-label" data-i18n="wp.bing">必应每日壁纸</span>
                             <label class="switch">
                                 <input type="checkbox" id="wp-bing-toggle">
                                 <span class="switch-slider"></span>
@@ -462,7 +457,7 @@
                     <!-- 图片壁纸 -->
                     <div class="wallpaper-type-block" data-type="image">
                         <div class="wallpaper-type-header">
-                            <span class="setting-label" data-i18n="wp.image">🖼️ 图片壁纸</span>
+                            <span class="setting-label" data-i18n="wp.image">图片壁纸</span>
                             <label class="switch">
                                 <input type="checkbox" id="wp-image-toggle">
                                 <span class="switch-slider"></span>
@@ -513,7 +508,7 @@
                     <!-- 纯色壁纸 -->
                     <div class="wallpaper-type-block" data-type="solid">
                         <div class="wallpaper-type-header">
-                            <span class="setting-label" data-i18n="wp.solid">⬜ 纯色壁纸</span>
+                            <span class="setting-label" data-i18n="wp.solid">纯色壁纸</span>
                             <label class="switch">
                                 <input type="checkbox" id="wp-solid-toggle">
                                 <span class="switch-slider"></span>

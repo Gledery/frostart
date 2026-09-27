@@ -13,6 +13,7 @@
 - **不引入框架 / 构建工具**：原生 HTML / CSS / JS，保持代码可直接阅读。这是有意决定，记录在 [README.md](./README.md) 技术栈章节——"想抄哪段直接拿走就行"。第三方库一律按需懒加载
 - **尊重 `prefers-reduced-motion`**：[components.css](./css/components.css) 末尾有全局兜底关闭动画的媒体查询，新增持续型动画（脉冲、循环 keyframes）时要确认在 reduced-motion 下也被关掉
 - **入场动画**：页面载入即出现的元素（search-box、shortcut 等）走 CSS `@keyframes` + `animation-delay` 错峰入场（见 [components.css](./css/components.css)）；只有角落 Kaomoji 和 changelog hero 这种"需要 JS 确认 DOM 后再触发"的场景才用 `window.load` + `.animate-in`（见 [changelog.js](./js/changelog.js) 末尾）。**不要用 `setTimeout` 人工延迟**去防鬼畜，首屏壁纸已经有三层防闪烁防线（见下）
+- **实际视觉效果由人类检查**：改完界面后不要自行开浏览器 Agent、自动化截图或起本地服务器去"验收"渲染效果，代码层面的自查（语法、引用、诊断）照常做，视觉确认留给维护者
 
 ---
 
