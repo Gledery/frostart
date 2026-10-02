@@ -72,6 +72,10 @@
     --search-text-color: var(--text-primary);
     --search-placeholder-color: var(--text-muted);
     --settings-icon-color: var(--text-primary);
+    /* 主题色底色上的文字（强调按钮、定位徽标） */
+    --text-on-accent: #ffffff;
+    /* 设置搜索框高度（结果浮层圆角 = 该值 / 2） */
+    --settings-search-height: 44px;
 
     /* 圆角系统 */
     --radius-sm: 16px;
