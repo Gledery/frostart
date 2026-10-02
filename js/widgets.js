@@ -9,24 +9,40 @@
 /* =========================================
    设置搜索
    ========================================= */
-/* 重建设置搜索索引（语言切换后需要重建，让标签/hint 用新语言重新入索引） */
+/* 搜索目标：普通设置项 + 壁纸分区标题行（标题行在 .setting-item 之外，需单独收录） */
+const SETTINGS_SEARCH_TARGETS = '.setting-item, .wallpaper-type-header';
+const SETTINGS_SEARCH_LIMIT = 10;
+
+/* 重建设置搜索索引（语言切换后需要重建，让标题/hint/位置用新语言重新入索引） */
 function rebuildSettingsSearchIndex() {
     const drawer = document.getElementById('settings-drawer');
     if (!drawer) return;
-    drawer.querySelectorAll('.setting-item').forEach(item => {
-        const label = (item.querySelector('.setting-label, .switch-row .setting-label, .color-input-wrapper .setting-label') || {}).textContent || '';
-        const hint = (item.querySelector('.setting-hint') || {}).textContent || '';
-        const section = item.closest('.settings-section');
-        const sectionTitle = section && section.querySelector('.section-title');
-        const sectionText = sectionTitle ? sectionTitle.textContent : '';
-        const panel = item.closest('.tab-panel');
-        const tabKey = panel ? 'tab.' + panel.dataset.panel : '';
-        let tabName = '';
-        if (tabKey) {
-            const v = I18N.t(tabKey);
-            tabName = v === tabKey ? '' : v;
+    const normalize = s => (s || '').replace(/\s+/g, ' ').trim();
+
+    drawer.querySelectorAll(SETTINGS_SEARCH_TARGETS).forEach(el => {
+        const labelEl = el.querySelector('.setting-label');
+        const hintEl = el.querySelector('.setting-hint');
+        const buttonEl = el.querySelector('button');
+        const label = normalize(labelEl ? labelEl.textContent : '');
+        const hint = normalize(hintEl ? hintEl.textContent : '');
+
+        // 没有标题的元素（纯 hint 行、按钮行）依次用 hint、按钮文案兜底
+        const title = label || hint || normalize(buttonEl ? buttonEl.textContent : '');
+
+        const section = el.closest('.settings-section');
+        const sectionTitleEl = section ? section.querySelector('.section-title') : null;
+        const sectionText = normalize(sectionTitleEl ? sectionTitleEl.textContent : '');
+        const panel = el.closest('.tab-panel');
+        let tabText = '';
+        if (panel) {
+            const v = I18N.t('tab.' + panel.dataset.panel);
+            if (v !== 'tab.' + panel.dataset.panel) tabText = v;
         }
-        item.dataset.searchText = (tabName + ' ' + sectionText + ' ' + label + ' ' + hint + ' ' + item.textContent).replace(/\s+/g, ' ').trim().toLowerCase();
+
+        el.dataset.searchTitle = title;
+        el.dataset.searchLocation = [tabText, sectionText].filter(Boolean).join(' · ');
+        // 所属标签页 / 分区只用于结果展示，不参与匹配，避免输入分类名时命中整组
+        el.dataset.searchText = (label + ' ' + hint + ' ' + normalize(el.textContent)).toLowerCase();
     });
 }
 
@@ -34,110 +50,171 @@ function initSettingsSearch() {
     const input = document.getElementById('settings-search-input');
     const kbd = document.getElementById('settings-search-kbd');
     const wrap = document.getElementById('settings-search-wrap');
+    const results = document.getElementById('settings-search-results');
     const drawer = document.getElementById('settings-drawer');
-    if (!input || !wrap || !drawer) return;
+    if (!input || !wrap || !results || !drawer) return;
 
-    // 为每个 .setting-item 建立可搜索文本（标签 + hint + 所属 section + 所属标签页）
     rebuildSettingsSearchIndex();
 
+    let activeIndex = -1;
+    let matches = [];
+    let resultButtons = [];
+
+    function hideResults() {
+        results.classList.remove('show');
+        activeIndex = -1;
+        matches = [];
+        resultButtons = [];
+        input.removeAttribute('aria-activedescendant');
+    }
+
     function clearSearch() {
-        drawer.classList.remove('settings-search-active');
-        drawer.querySelectorAll('.setting-item').forEach(i => {
-            i.classList.remove('search-match', 'search-section-keep');
-        });
-        const empty = drawer.querySelector('.settings-search-empty');
-        if (empty) empty.remove();
+        input.value = '';
+        hideResults();
     }
 
-    function runSearch(raw) {
-        const q = raw.trim().toLowerCase();
-        if (!q) { clearSearch(); return; }
-
-        const items = Array.from(drawer.querySelectorAll('.setting-item'));
-        let matchedPanels = new Set();
-        let matchCount = 0;
-        items.forEach(item => {
-            const hit = item.dataset.searchText.includes(q);
-            item.classList.toggle('search-match', hit);
-            if (hit) {
-                matchCount++;
-                const panel = item.closest('.tab-panel');
-                if (panel) matchedPanels.add(panel);
-            }
+    function setActiveIndex(i) {
+        activeIndex = i;
+        resultButtons.forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === i);
+            btn.setAttribute('aria-selected', idx === i ? 'true' : 'false');
         });
-
-        // 标记匹配项所属 section 内的标题项（保留可见但不属于 match，避免标题淡化）
-        items.forEach(item => {
-            const section = item.closest('.settings-section');
-            if (!section) return;
-            const hasMatch = section.querySelector('.setting-item.search-match');
-            if (hasMatch) item.classList.add('search-section-keep');
-            else item.classList.remove('search-section-keep');
-        });
-
-        // 显示第一个命中的标签页
-        const tabBtns = drawer.querySelectorAll('.tab-btn');
-        const panels = drawer.querySelectorAll('.tab-panel');
-        if (matchedPanels.size > 0) {
-            const firstPanel = matchedPanels.values().next().value;
-            panels.forEach(p => p.classList.toggle('active', p === firstPanel));
-            tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === firstPanel.dataset.panel));
-        }
-
-        drawer.classList.add('settings-search-active');
-
-        // 空结果提示
-        const content = drawer.querySelector('.drawer-content');
-        let empty = drawer.querySelector('.settings-search-empty');
-        if (matchCount === 0) {
-            if (!empty) {
-                empty = document.createElement('div');
-                empty.className = 'settings-search-empty';
-                empty.textContent = I18N.t('settings.noMatch', { q: raw.trim() });
-                content.appendChild(empty);
-            } else {
-                empty.textContent = I18N.t('settings.noMatch', { q: raw.trim() });
-            }
-        } else if (empty) {
-            empty.remove();
-        }
+        input.setAttribute('aria-activedescendant', `settings-search-result-${i}`);
+        resultButtons[i].scrollIntoView({ block: 'nearest' });
     }
 
-    input.addEventListener('input', () => runSearch(input.value));
+    function moveSelection(direction) {
+        if (!matches.length) return;
+        if (activeIndex < 0) setActiveIndex(direction > 0 ? 0 : matches.length - 1);
+        else setActiveIndex((activeIndex + direction + matches.length) % matches.length);
+    }
 
-    // 清空时恢复默认（外观）标签页
-    input.addEventListener('search', () => {
-        if (!input.value) {
-            clearSearch();
-            const firstBtn = drawer.querySelector('.tab-btn[data-tab="appearance"]');
-            if (firstBtn) firstBtn.click();
+    /* 定位后目标项的闪烁强调，2.4s 后自动撤销 */
+    let highlighted = null;
+    let highlightTimer = null;
+
+    function clearHighlight() {
+        if (highlightTimer) clearTimeout(highlightTimer);
+        if (highlighted) {
+            highlighted.classList.remove('settings-search-target');
+            delete highlighted.dataset.searchHighlight;
         }
-    });
+        highlighted = null;
+        highlightTimer = null;
+    }
 
-    // "/" 快捷键聚焦搜索框（抽屉打开时）
-    document.addEventListener('keydown', (e) => {
-        if (e.key === '/' && drawer.classList.contains('open') && document.activeElement.tagName !== 'INPUT') {
+    /* 定位到目标设置项：切标签页 → 展开壁纸折叠分区 → 滚动 → 闪烁强调 */
+    function locate(target) {
+        const panel = target.closest('.tab-panel');
+        if (panel && !panel.classList.contains('active')) {
+            const tabBtn = drawer.querySelector(`.tab-btn[data-tab="${panel.dataset.panel}"]`);
+            if (tabBtn) tabBtn.click();
+        }
+
+        // 目标在折叠的壁纸分区里：先展开让它可滚动（仅展开，不改变壁纸模式）
+        const block = target.closest('.wallpaper-type-block');
+        if (block && !block.classList.contains('expanded')) block.classList.add('expanded');
+
+        clearSearch();
+
+        clearHighlight();
+        highlighted = target;
+        target.dataset.searchHighlight = I18N.t('settings.located');
+        target.classList.add('settings-search-target');
+        highlightTimer = setTimeout(clearHighlight, 2400);
+
+        requestAnimationFrame(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
+
+    function renderResults() {
+        const raw = input.value.trim();
+        if (!raw) { hideResults(); return; }
+
+        const parts = raw.toLowerCase().split(/\s+/).filter(Boolean);
+        matches = Array.from(drawer.querySelectorAll(SETTINGS_SEARCH_TARGETS))
+            .filter(el => parts.every(p => (el.dataset.searchText || '').includes(p)))
+            .slice(0, SETTINGS_SEARCH_LIMIT);
+
+        results.innerHTML = '';
+        const buttons = [];
+        if (matches.length === 0) {
+            const p = document.createElement('p');
+            p.className = 'settings-search-no-result';
+            p.textContent = I18N.t('settings.noMatch', { q: raw });
+            results.appendChild(p);
+        } else {
+            matches.forEach((target, i) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'settings-search-result';
+                btn.id = `settings-search-result-${i}`;
+                btn.setAttribute('role', 'option');
+                btn.setAttribute('aria-selected', 'false');
+
+                const name = document.createElement('strong');
+                name.textContent = target.dataset.searchTitle || '';
+                const location = document.createElement('span');
+                location.textContent = target.dataset.searchLocation || '';
+
+                btn.appendChild(name);
+                btn.appendChild(location);
+                btn.addEventListener('mouseenter', () => setActiveIndex(i));
+                btn.addEventListener('click', () => locate(target));
+                results.appendChild(btn);
+                buttons.push(btn);
+            });
+        }
+        resultButtons = buttons;
+        results.classList.add('show');
+        activeIndex = -1;
+    }
+
+    input.addEventListener('input', renderResults);
+
+    input.addEventListener('keydown', (e) => {
+        if (e.isComposing) return;
+        if (e.key === 'ArrowDown') {
             e.preventDefault();
-            input.focus();
-            input.select();
-        }
-        if (e.key === 'Escape' && document.activeElement === input) {
-            input.value = '';
+            moveSelection(1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            moveSelection(-1);
+        } else if (e.key === 'Enter') {
+            const target = matches[activeIndex >= 0 ? activeIndex : 0];
+            if (target) {
+                e.preventDefault();
+                locate(target);
+            }
+        } else if (e.key === 'Escape') {
             clearSearch();
             input.blur();
         }
     });
 
-    if (kbd) {
-        kbd.addEventListener('click', () => { input.focus(); input.select(); });
-    }
+    // 点击搜索框以外区域：收起结果
+    document.addEventListener('mousedown', (e) => {
+        if (!wrap.contains(e.target)) clearSearch();
+    });
 
-    // 抽屉关闭/打开时重置
-    const observer = new MutationObserver(() => {
-        if (!drawer.classList.contains('open') && input.value) {
-            input.value = '';
-            clearSearch();
+    // "/" 快捷键聚焦搜索框（抽屉打开时）
+    document.addEventListener('keydown', (e) => {
+        const active = document.activeElement;
+        if (e.key === '/' && drawer.classList.contains('open')
+            && !['INPUT', 'TEXTAREA'].includes(active.tagName)
+            && !active.isContentEditable) {
+            e.preventDefault();
+            input.focus();
+            input.select();
         }
+    });
+
+    if (kbd) kbd.addEventListener('click', () => { input.focus(); input.select(); });
+
+    // 抽屉关闭时重置
+    const observer = new MutationObserver(() => {
+        if (!drawer.classList.contains('open') && input.value) clearSearch();
     });
     observer.observe(drawer, { attributes: true, attributeFilter: ['class'] });
 }
