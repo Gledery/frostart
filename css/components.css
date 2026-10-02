@@ -443,7 +443,7 @@ body.hide-shortcut-names .shortcut-item {
     align-items: center;
     margin: 16px 20px 0;
     padding: 0 14px;
-    height: 44px;
+    height: var(--settings-search-height);
     background-color: var(--bg-secondary);
     border: var(--border-glass);
     border-radius: var(--radius-pill);
@@ -500,31 +500,139 @@ body.hide-shortcut-names .shortcut-item {
     background-color: var(--bg-hover);
 }
 
-/* 搜索高亮：匹配的设置项突出显示 */
-.settings-search-active .setting-item.search-match {
+/* 搜索结果浮层：输入时出现在搜索框下方，胶囊轮廓 + 标准毛玻璃 */
+.settings-search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 60vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px;
+    background-color: var(--bg-primary);
+    backdrop-filter: saturate(var(--saturation-amount)) blur(var(--blur-amount));
+    -webkit-backdrop-filter: saturate(var(--saturation-amount)) blur(var(--blur-amount));
+    border: var(--border-glass);
+    border-radius: calc(var(--settings-search-height) / 2);
+    box-shadow: var(--shadow-xl);
+    /* 显隐过渡：收起时不可交互，展开从顶部轻微下落 */
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transform-origin: top center;
+    visibility: hidden;
+    transition:
+        opacity var(--time-normal) var(--easing-enter),
+        transform var(--time-normal) var(--easing-enter),
+        visibility var(--time-normal);
+}
+
+.settings-search-results.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    visibility: visible;
+}
+
+.settings-search-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background-color: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--time-fast) var(--easing-standard);
+}
+
+.settings-search-result:hover,
+.settings-search-result.active {
+    background-color: var(--bg-active);
+}
+
+.settings-search-result strong {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-search-result span {
+    flex: 0 1 auto;
+    max-width: 45%;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-search-no-result {
+    padding: 20px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* 定位后的目标项闪烁强调 */
+.settings-search-target {
+    position: relative;
+    z-index: 2;
+    isolation: isolate;
+    border-radius: var(--radius-sm);
+}
+
+.settings-search-target > * {
     position: relative;
     z-index: 1;
 }
 
-.settings-search-active .setting-item:not(.search-match):not(.search-section-keep) {
-    opacity: 0.28;
-    filter: saturate(0.6);
-    transition: opacity var(--time-normal) var(--easing-standard), filter var(--time-normal) var(--easing-standard);
+.settings-search-target::before {
+    content: "";
+    position: absolute;
+    inset: 0 -10px;
+    z-index: 0;
+    border-radius: var(--radius-sm);
+    background-color: var(--accent-color);
+    pointer-events: none;
+    animation: settings-search-flash 2.4s ease-in-out;
 }
 
-.setting-item {
-    transition: opacity var(--time-normal) var(--easing-standard), filter var(--time-normal) var(--easing-standard);
+.settings-search-target::after {
+    content: attr(data-search-highlight);
+    position: absolute;
+    top: -12px;
+    right: 6px;
+    z-index: 3;
+    padding: 2px 10px;
+    border-radius: var(--radius-pill);
+    background-color: var(--accent-color);
+    color: var(--text-on-accent);
+    font-size: 12px;
+    line-height: 1.4;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: settings-search-label 2.4s ease-out;
 }
 
-.settings-search-empty {
-    text-align: center;
-    padding: 40px 16px;
-    color: var(--text-muted);
-    font-size: 14px;
+@keyframes settings-search-flash {
+    0%, 100% { opacity: 0; }
+    18%, 48%, 78% { opacity: 0.18; }
+    33%, 63% { opacity: 0; }
 }
 
-/* 搜索状态下隐藏非匹配标签页的 tab-nav 切换作用，但保留视觉 */
-.settings-search-active .tab-panel:not(.active) { display: none !important; }
+@keyframes settings-search-label {
+    0% { opacity: 0; transform: translateY(5px); }
+    14%, 72% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-5px); }
+}
 
 /* =========================================
    标签页导航
