@@ -165,7 +165,7 @@ function applyTheme(theme) {
     _blobAlphaCache = null;
     // 主题切换后图标背景基色 RGB 变化，需重新应用
     applyIconBgOpacity(SettingsManager.get('iconBgOpacity'));
-    // 文本默认色随主题变化，需重新解析（单独/全局覆盖的优先级在函数内保留）
+    // 文本默认色随主题变化，需重新解析（单独覆盖的优先级在函数内保留）
     applyTextColors(SettingsManager.getAll());
 }
 
@@ -184,9 +184,8 @@ function applyTextColors(settings) {
         ? { clock: WHITE, date: 'rgba(255,255,255,0.78)', shortcutName: 'rgba(255,255,255,0.78)', searchText: '#f0f0f8', searchPlaceholder: '#888898', settingsIcon: '#f0f0f8' }
         : { clock: WHITE, date: 'rgba(255,255,255,0.82)', shortcutName: 'rgba(255,255,255,0.82)', searchText: '#1a1a2a', searchPlaceholder: '#6a6a7a', settingsIcon: '#1a1a2a' };
 
-    // 解析顺序：单独覆盖 > 全局文本色 > 主题默认色
-    const global = settings.globalTextColor || '';
-    const resolve = (specific, def) => specific || global || def;
+    // 解析顺序：单独覆盖 > 主题默认色
+    const resolve = (specific, def) => specific || def;
 
     const map = [
         { key: 'clockColor', cssVar: '--clock-color', value: resolve(settings.clockColor, defaults.clock) },
@@ -199,13 +198,6 @@ function applyTextColors(settings) {
     map.forEach(({ cssVar, value }) => {
         root.style.setProperty(cssVar, value);
     });
-
-    // 保留 --global-text-color 给可能的外部引用，但不再依赖它做级联解析
-    if (global) {
-        root.style.setProperty('--global-text-color', global);
-    } else {
-        root.style.removeProperty('--global-text-color');
-    }
 }
 
 /* =========================================

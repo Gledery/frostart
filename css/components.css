@@ -223,8 +223,8 @@ body.hide-shortcut-names .shortcut-item {
     border-radius: var(--border-radius);
     /* 图标背景独立于全局玻璃色，保证在任意壁纸上都可见 */
     background-color: var(--icon-bg);
-    backdrop-filter: saturate(var(--saturation-amount)) blur(var(--icon-blur-amount, var(--blur-amount)));
-    -webkit-backdrop-filter: saturate(var(--saturation-amount)) blur(var(--icon-blur-amount, var(--blur-amount)));
+    backdrop-filter: saturate(var(--saturation-amount)) blur(var(--blur-amount));
+    -webkit-backdrop-filter: saturate(var(--saturation-amount)) blur(var(--blur-amount));
     border: var(--border-glass);
     display: flex;
     align-items: center;

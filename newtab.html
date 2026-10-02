@@ -262,6 +262,24 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title" data-i18n="clock.colorSection">颜色</h3>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="clock-color-picker" class="color-picker" value="#ffffff" data-i18n-aria="clock.clockColor" aria-label="时钟颜色">
+                            <span class="setting-label" data-i18n="clock.clockColor">时钟颜色</span>
+                            <button class="color-reset-btn" id="clock-color-reset" type="button" data-i18n="common.reset">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="date-color-picker" class="color-picker" value="#ffffff" data-i18n-aria="clock.dateColor" aria-label="日期颜色">
+                            <span class="setting-label" data-i18n="clock.dateColor">日期颜色</span>
+                            <button class="color-reset-btn" id="date-color-reset" type="button" data-i18n="common.reset">重置</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- 文本标签页 -->
@@ -293,60 +311,6 @@
                         <label class="setting-label" data-i18n="text.customFontName">自定义字体名称</label>
                         <input type="text" id="custom-font" class="text-input" placeholder="Inter, Noto Sans SC...">
                         <div class="setting-hint" data-i18n="text.customFontHint">选择预设或输入 Google 字体名。</div>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3 class="section-title" data-i18n="text.globalColor">全局文本颜色</h3>
-                    <div class="setting-item">
-                        <div class="color-input-wrapper">
-                            <input type="color" id="global-text-color-picker" class="color-picker" value="#1a1a2a" data-i18n-aria="text.globalColor" aria-label="全局文本颜色">
-                            <span class="setting-label" data-i18n="text.applyAll">应用到所有文本</span>
-                            <button class="color-reset-btn" id="global-text-color-reset" type="button" data-i18n="common.clear">清除</button>
-                        </div>
-                        <div class="setting-hint" style="margin-top:4px;" data-i18n="text.globalColorHint">设置后所有文本统一使用此颜色，下方可单独覆盖</div>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <div class="section-header-row">
-                        <h3 class="section-title" data-i18n="text.individualOverride">单独覆盖</h3>
-                        <button class="text-btn" id="reset-color-all" type="button" data-i18n="common.resetAll">全部重置</button>
-                    </div>
-                    <div class="setting-item">
-                        <div class="color-input-wrapper">
-                            <input type="color" id="clock-color-picker" class="color-picker" value="#ffffff" data-i18n-aria="text.clockColor" aria-label="时钟颜色">
-                            <span class="setting-label" data-i18n="text.clock">时钟</span>
-                            <button class="color-reset-btn" id="clock-color-reset" type="button" data-i18n="common.reset">重置</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="color-input-wrapper">
-                            <input type="color" id="date-color-picker" class="color-picker" value="#ffffff" data-i18n-aria="text.dateColor" aria-label="日期颜色">
-                            <span class="setting-label" data-i18n="text.date">日期</span>
-                            <button class="color-reset-btn" id="date-color-reset" type="button" data-i18n="common.reset">重置</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="color-input-wrapper">
-                            <input type="color" id="shortcut-name-color-picker" class="color-picker" value="#ffffff" data-i18n-aria="text.shortcutNameColor" aria-label="快捷方式名称颜色">
-                            <span class="setting-label" data-i18n="text.shortcutName">快捷方式名称</span>
-                            <button class="color-reset-btn" id="shortcut-name-color-reset" type="button" data-i18n="common.reset">重置</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="color-input-wrapper">
-                            <input type="color" id="search-text-color-picker" class="color-picker" value="#1a1a2a" data-i18n-aria="text.searchTextColor" aria-label="搜索文字颜色">
-                            <span class="setting-label" data-i18n="text.searchText">搜索文字</span>
-                            <button class="color-reset-btn" id="search-text-color-reset" type="button" data-i18n="common.reset">重置</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="color-input-wrapper">
-                            <input type="color" id="search-placeholder-color-picker" class="color-picker" value="#6a6a7a" data-i18n-aria="text.searchPlaceholderColor" aria-label="搜索占位符颜色">
-                            <span class="setting-label" data-i18n="text.searchPlaceholder">搜索占位符</span>
-                            <button class="color-reset-btn" id="search-placeholder-color-reset" type="button" data-i18n="common.reset">重置</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -585,6 +549,27 @@
                         </div>
                         <div class="setting-hint" data-i18n="search.radiusHint">拖到最右为完全胶囊形</div>
                     </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title" data-i18n="search.colorSection">颜色</h3>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="search-text-color-picker" class="color-picker" value="#1a1a2a" data-i18n-aria="search.textColor" aria-label="搜索文字颜色">
+                            <span class="setting-label" data-i18n="search.textColor">搜索文字颜色</span>
+                            <button class="color-reset-btn" id="search-text-color-reset" type="button" data-i18n="common.reset">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="search-placeholder-color-picker" class="color-picker" value="#6a6a7a" data-i18n-aria="search.placeholderColor" aria-label="搜索占位符颜色">
+                            <span class="setting-label" data-i18n="search.placeholderColor">搜索占位符颜色</span>
+                            <button class="color-reset-btn" id="search-placeholder-color-reset" type="button" data-i18n="common.reset">重置</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <div class="setting-item">
                         <label class="setting-label" data-i18n="search.customEngines">自定义引擎</label>
                         <div class="custom-engines-list" id="custom-engines-list"></div>
@@ -599,6 +584,7 @@
             <!-- 快捷方式标签页 -->
             <div class="tab-panel" data-panel="shortcuts">
                 <div class="settings-section">
+                    <h3 class="section-title" data-i18n="sc.appearanceSection">图标外观</h3>
                     <div class="setting-item">
                         <label class="setting-label" data-i18n="sc.iconSize">图标大小</label>
                         <div class="slider-container">
@@ -612,30 +598,6 @@
                             <input type="range" id="radius-slider" class="slider" min="0" max="40" value="24">
                             <span class="slider-value" id="radius-value">24px</span>
                         </div>
-                    </div>
-                    <div class="setting-item">
-                        <label class="setting-label" data-i18n="sc.nameSize">图标文字大小</label>
-                        <div class="slider-container">
-                            <input type="range" id="shortcut-name-size-slider" class="slider" min="0" max="24" value="13">
-                            <span class="slider-value" id="shortcut-name-size-value">13px</span>
-                        </div>
-                        <div class="setting-hint" data-i18n="sc.nameSizeHint">设为 0 则隐藏图标下方的名称</div>
-                    </div>
-                    <div class="setting-item">
-                        <label class="setting-label" data-i18n="sc.bgOpacity">图标背景透明度</label>
-                        <div class="slider-container">
-                            <input type="range" id="icon-bg-slider" class="slider" min="-1" max="100" value="-1">
-                            <span class="slider-value" id="icon-bg-value" data-i18n="word.default">默认</span>
-                        </div>
-                        <div class="setting-hint" data-i18n="sc.bgOpacityHint">设为"默认"则使用高不透明度，保证图标可见</div>
-                    </div>
-                    <div class="setting-item">
-                        <label class="setting-label" data-i18n="sc.blur">图标模糊</label>
-                        <div class="slider-container">
-                            <input type="range" id="icon-blur-slider" class="slider" min="-1" max="30" value="-1">
-                            <span class="slider-value" id="icon-blur-value" data-i18n="word.follow">跟随</span>
-                        </div>
-                        <div class="setting-hint" data-i18n="sc.blurHint">设为"跟随"则使用全局模糊度</div>
                     </div>
                     <div class="setting-item">
                         <label class="setting-label" data-i18n="sc.gap">图标间距</label>
@@ -656,6 +618,14 @@
                         </div>
                     </div>
                     <div class="setting-item">
+                        <label class="setting-label" data-i18n="sc.bgOpacity">图标背景透明度</label>
+                        <div class="slider-container">
+                            <input type="range" id="icon-bg-slider" class="slider" min="-1" max="100" value="-1">
+                            <span class="slider-value" id="icon-bg-value" data-i18n="word.default">默认</span>
+                        </div>
+                        <div class="setting-hint" data-i18n="sc.bgOpacityHint">设为"默认"则使用高不透明度，保证图标可见</div>
+                    </div>
+                    <div class="setting-item">
                         <div class="switch-row">
                             <span class="setting-label" data-i18n="sc.openNewTab">在新标签页打开</span>
                             <label class="switch">
@@ -664,6 +634,28 @@
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title" data-i18n="sc.textSection">图标文字</h3>
+                    <div class="setting-item">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="shortcut-name-color-picker" class="color-picker" value="#ffffff" data-i18n-aria="sc.nameColor" aria-label="名称颜色">
+                            <span class="setting-label" data-i18n="sc.nameColor">名称颜色</span>
+                            <button class="color-reset-btn" id="shortcut-name-color-reset" type="button" data-i18n="common.reset">重置</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label" data-i18n="sc.nameSize">图标文字大小</label>
+                        <div class="slider-container">
+                            <input type="range" id="shortcut-name-size-slider" class="slider" min="0" max="24" value="13">
+                            <span class="slider-value" id="shortcut-name-size-value">13px</span>
+                        </div>
+                        <div class="setting-hint" data-i18n="sc.nameSizeHint">设为 0 则隐藏图标下方的名称</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <div class="shortcuts-list" id="shortcuts-list"></div>
                     <button class="add-shortcut-btn" id="add-shortcut-btn" type="button">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

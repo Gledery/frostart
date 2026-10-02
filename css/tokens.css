@@ -65,12 +65,12 @@
     --search-radius: 9999px;
     --content-position: 18;
 
-    /* 细化文本颜色（每种文本可独立覆盖） */
-    --clock-color: var(--global-text-color, var(--text-primary));
-    --date-color: var(--global-text-color, var(--text-secondary));
-    --shortcut-name-color: var(--global-text-color, var(--text-secondary));
-    --search-text-color: var(--global-text-color, var(--text-primary));
-    --search-placeholder-color: var(--global-text-color, var(--text-muted));
+    /* 细化文本颜色（每种文本可独立覆盖，未覆盖时随主题取默认色） */
+    --clock-color: var(--text-primary);
+    --date-color: var(--text-secondary);
+    --shortcut-name-color: var(--text-secondary);
+    --search-text-color: var(--text-primary);
+    --search-placeholder-color: var(--text-muted);
     --settings-icon-color: var(--text-primary);
 
     /* 圆角系统 */

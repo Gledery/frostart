@@ -155,13 +155,6 @@ function applySettings() {
     // 图标背景透明度自定义（-1 = 默认高不透明度，确保可见）
     applyIconBgOpacity(settings.iconBgOpacity);
 
-    // 图标模糊自定义（-1 = 跟随主模糊）
-    if (settings.iconBlur >= 0) {
-        root.style.setProperty('--icon-blur-amount', `${settings.iconBlur}px`);
-    } else {
-        root.style.removeProperty('--icon-blur-amount');
-    }
-
     applyWallpaper(settings);
     applyFont(settings.customFont);
     applyClockFont(settings.clockFont);

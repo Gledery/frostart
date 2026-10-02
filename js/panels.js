@@ -577,6 +577,7 @@ function updateClockFontPresets(currentFont) {
 
 /* =========================================
    文本颜色设置
+   五个颜色选择器分布在时钟 / 搜索 / 图标三个标签页，按 id 统一绑定
    ========================================= */
 function initTextColors() {
     // fallback = 未自定义时选择器显示的颜色（与 applyTextColors 的默认色取向一致）
@@ -587,34 +588,13 @@ function initTextColors() {
         { id: 'search-text-color', key: 'searchTextColor', fallback: '#1a1a2a' },
         { id: 'search-placeholder-color', key: 'searchPlaceholderColor', fallback: '#6a6a7a' }
     ];
-    const settings = SettingsManager.getAll();
 
-    // 全局颜色（无单独取向，用中性深色）
-    const GLOBAL_FALLBACK = '#1a1a2a';
-    const globalPicker = document.getElementById('global-text-color-picker');
-    const globalReset = document.getElementById('global-text-color-reset');
-    if (globalPicker) {
-        globalPicker.value = settings.globalTextColor || GLOBAL_FALLBACK;
-        globalPicker.addEventListener('input', () => {
-            SettingsManager.set('globalTextColor', globalPicker.value);
-            applyTextColors(SettingsManager.getAll());
-        });
-    }
-    if (globalReset) {
-        globalReset.addEventListener('click', () => {
-            SettingsManager.set('globalTextColor', '');
-            applyTextColors(SettingsManager.getAll());
-            globalPicker.value = GLOBAL_FALLBACK;
-        });
-    }
-
-    // 单独覆盖
     items.forEach(({ id, key, fallback }) => {
         const picker = document.getElementById(`${id}-picker`);
         const reset = document.getElementById(`${id}-reset`);
         if (!picker) return;
 
-        picker.value = settings[key] || fallback;
+        picker.value = SettingsManager.get(key) || fallback;
 
         picker.addEventListener('input', () => {
             SettingsManager.set(key, picker.value);
@@ -626,26 +606,9 @@ function initTextColors() {
                 SettingsManager.set(key, '');
                 applyTextColors(SettingsManager.getAll());
                 picker.value = fallback;
-                picker.value = '#1a1a2a';
             });
         }
     });
-
-    // 全部重置
-    const resetAll = document.getElementById('reset-color-all');
-    if (resetAll) {
-        resetAll.addEventListener('click', () => {
-            items.forEach(({ id, key, fallback }) => {
-                SettingsManager.set(key, '');
-                const p = document.getElementById(`${id}-picker`);
-                if (p) p.value = fallback;
-            });
-            SettingsManager.set('globalTextColor', '');
-            if (globalPicker) globalPicker.value = GLOBAL_FALLBACK;
-            applyTextColors(SettingsManager.getAll());
-            showToast(I18N.t('toast.colorsReset'));
-        });
-    }
 }
 
 /* =========================================

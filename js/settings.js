@@ -23,7 +23,6 @@ const SettingsManager = {
         iconSize: 72,
         borderRadius: 24,
         iconBgOpacity: -1,
-        iconBlur: -1,
         shortcutGap: 24,
         shortcutNameSize: 13,
         searchHeight: 58,
@@ -35,7 +34,6 @@ const SettingsManager = {
         shortcutNameColor: '',
         searchTextColor: '',
         searchPlaceholderColor: '',
-        globalTextColor: '',
         clockSize: 100,
         searchWidth: 650,
         contentPosition: 18,
@@ -146,6 +144,9 @@ const SettingsManager = {
     },
 
     _migrateSettings(settings) {
+        // 已下线的设置项：全局文本色、图标单独模糊度，清理存量/导入数据中的死键
+        delete settings.globalTextColor;
+        delete settings.iconBlur;
         settings.version = this.VERSION;
         return settings;
     },
@@ -248,8 +249,8 @@ const SettingsManager = {
                 try {
                     const data = JSON.parse(e.target.result);
                     const imported = data.settings || data;
-                    // 智能合并：保留默认值作为基础，用导入数据覆盖
-                    this.settings = { ...this.defaultSettings, ...imported };
+                    // 智能合并：保留默认值作为基础，用导入数据覆盖；迁移会清理已下线的死键
+                    this.settings = { ...this.defaultSettings, ...this._migrateSettings({ ...imported }) };
                     this.saveNow();
                     resolve(this.settings);
                 } catch (err) {

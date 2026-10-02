@@ -26,7 +26,6 @@ function initSliders() {
         { id: 'wallpaper-blur-slider', key: 'wallpaperBlur', unit: 'px', cssVar: '--wallpaper-image-blur' },
         { id: 'bing-mask-slider', key: 'wallpaperMask', unit: '%', cssVar: '--wallpaper-mask-opacity', transform: v => v / 100 },
         { id: 'bing-blur-slider', key: 'wallpaperBlur', unit: 'px', cssVar: '--wallpaper-image-blur' },
-        { id: 'icon-blur-slider', key: 'iconBlur', unit: 'px', customHandler: handleIconBlurChange },
         { id: 'icon-bg-slider', key: 'iconBgOpacity', unit: '%', customHandler: handleIconBgChange }
     ];
 
@@ -182,18 +181,6 @@ function startEditingValue(display, slider) {
     display.addEventListener('keydown', onKey);
 }
 
-function handleIconBlurChange(value, display, unit) {
-    if (display) {
-        display.textContent = value === -1 ? I18N.t('word.follow') : `${value}${unit}`;
-    }
-    SettingsManager.set('iconBlur', value);
-    if (value >= 0) {
-        document.documentElement.style.setProperty('--icon-blur-amount', `${value}px`);
-    } else {
-        document.documentElement.style.removeProperty('--icon-blur-amount');
-    }
-}
-
 /* 图标背景透明度：-1 = 默认（高不透明度，确保图标可见）；0–100 = 背景色 alpha */
 function applyIconBgOpacity(value) {
     const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -261,7 +248,6 @@ function updateSliderValues() {
         { id: 'wallpaper-blur-slider', valueId: 'wallpaper-blur-value', key: 'wallpaperBlur', unit: 'px' },
         { id: 'bing-mask-slider', valueId: 'bing-mask-value', key: 'wallpaperMask', unit: '%' },
         { id: 'bing-blur-slider', valueId: 'bing-blur-value', key: 'wallpaperBlur', unit: 'px' },
-        { id: 'icon-blur-slider', valueId: 'icon-blur-value', key: 'iconBlur', unit: 'px', special: true },
         { id: 'icon-bg-slider', valueId: 'icon-bg-value', key: 'iconBgOpacity', unit: '%', special: 'iconOpacity' }
     ];
 
@@ -279,9 +265,7 @@ function updateSliderValues() {
         }
 
         if (display && settings[key] !== undefined) {
-            if (special === true) {
-                display.textContent = settings[key] === -1 ? I18N.t('word.follow') : `${settings[key]}${unit}`;
-            } else if (special === 'iconOpacity') {
+            if (special === 'iconOpacity') {
                 display.textContent = settings[key] === -1 ? I18N.t('word.default') : `${settings[key]}${unit}`;
             } else if (special === 'maxwidth') {
                 const u = settings.iconMaxWidthUnit || 'px';
