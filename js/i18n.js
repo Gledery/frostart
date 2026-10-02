@@ -42,6 +42,7 @@ const I18N = (function () {
         'settings.searchPlaceholder': '搜索设置…',
         'settings.searchKbdTitle': '按 / 键搜索设置',
         'settings.noMatch': '没有找到与"{q}"相关的设置',
+        'settings.located': '已定位',
 
         /* 标签页 */
         'tab.appearance': '外观',
@@ -513,6 +514,7 @@ const I18N = (function () {
         'settings.searchPlaceholder': 'Search settings…',
         'settings.searchKbdTitle': 'Press / to search settings',
         'settings.noMatch': 'No settings matching "{q}" found',
+        'settings.located': 'Located',
 
         /* tabs */
         'tab.appearance': 'Appearance',
