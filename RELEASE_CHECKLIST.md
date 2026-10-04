@@ -47,3 +47,4 @@
 - [ ] `git commit` 信息格式：`vX.X.X: 简述`
 - [ ] 打包时排除 `.git/`、`PhaswerWebSource-*/`、`*.zip`
 - [ ] 在 Chrome 和 Edge 中分别加载测试
+- [ ] Release 发布后把 `release` 分支快进到新 tag，触发在线预览网页版部署稳定版：`git push origin vX.X.X:refs/heads/release`
