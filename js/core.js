@@ -246,7 +246,7 @@ function initAccentPicker() {
 
     customInput.addEventListener('input', (e) => setAccent(e.target.value));
 
-    resetBtn.addEventListener('click', () => setAccent(''));
+    resetBtn.addEventListener('click', () => setAccent(SettingsManager.defaultSettings.accentColor));
 
     // 初始化选中态
     syncAccentPickerUI();
